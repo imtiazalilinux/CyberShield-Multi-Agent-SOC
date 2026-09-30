@@ -791,7 +791,7 @@ specialist_definitions = [
 
 specialist_results = []
 
-    total_agents = len(specialist_definitions)
+total_agents = len(specialist_definitions)
 
     # --------------------------------------------------------
     # Run specialists
