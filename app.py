@@ -797,22 +797,21 @@ total_agents = len(specialist_definitions)
     # Run specialists
     # --------------------------------------------------------
 
-    for index, (agent_name, task) in enumerate(
-        specialist_definitions,
-        start=1,
-    ):
+for index, (agent_name, task) in enumerate(
+    specialist_definitions,
+    start=1,
+):
 
-        status.info(
-            f"Running {agent_name}..."
-        )
+    status.info(
+        f"Running {agent_name}..."
+    )
 
-       result = specialist_agent(
-    agent_name,
-    evidence,
-    task,
-    ioc_context,
-
-        )
+    result = specialist_agent(
+        agent_name,
+        evidence,
+        task,
+        ioc_context,
+    )
 
         specialist_results.append(
             {
