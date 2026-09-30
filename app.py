@@ -270,7 +270,7 @@ Return:
 4. Recommended action
 """
 
-   user_prompt = f"""
+    user_prompt = f"""
 Investigation evidence:
 
 {clean_text(evidence)}
@@ -295,6 +295,7 @@ Provide a concise SOC finding.
 # ============================================================
 # RISK AGENT
 # ============================================================
+
 
 def risk_agent(findings):
 
