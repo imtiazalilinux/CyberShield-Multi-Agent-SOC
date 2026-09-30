@@ -1,337 +1,758 @@
 import streamlit as st
-from groq import Groq
 import hashlib
 import json
-from datetime import datetime
-from pathlib import Path
+from groq import Groq
+
+
+# ============================================================
+# CYBERSHIELD MULTI-AGENT SOC
+# Token-efficient MVP for Groq free/on-demand limits
+# ============================================================
 
 st.set_page_config(
-    page_title="CyberShield | Multi-Agent SOC",
+    page_title="CyberShield Multi-Agent SOC",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# -----------------------------
-# Cybersecurity-style UI
-# -----------------------------
-st.markdown(r"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-.stApp {
-    background:
-      radial-gradient(circle at 8% 8%, rgba(0,255,170,.10), transparent 25%),
-      radial-gradient(circle at 92% 12%, rgba(0,150,255,.12), transparent 28%),
-      radial-gradient(circle at 50% 100%, rgba(150,70,255,.10), transparent 30%),
-      linear-gradient(135deg,#030712 0%,#071421 48%,#030712 100%);
-}
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg,#030811 0%,#071521 100%);
-    border-right: 1px solid rgba(0,255,170,.16);
-}
-.hero {
-    padding: 30px;
-    border: 1px solid rgba(0,255,170,.20);
-    border-radius: 24px;
-    background: linear-gradient(135deg,rgba(8,35,46,.94),rgba(5,14,27,.92));
-    box-shadow: 0 0 55px rgba(0,255,170,.08);
-    margin-bottom: 22px;
-}
-.hero h1 { margin:0; font-size:42px; font-weight:800; letter-spacing:-1px; }
-.hero p { margin:8px 0 0; color:#91a9b9; }
-.card {
-    border:1px solid rgba(120,170,200,.16);
-    border-radius:16px;
-    padding:17px;
-    background:rgba(8,20,32,.72);
-    min-height:118px;
-    margin-bottom:10px;
-}
-.card h4 { margin:0 0 7px; color:#dcecf5; }
-.card p { margin:0; color:#8da5b5; font-size:13px; }
-.metric {
-    border:1px solid rgba(0,255,170,.15);
-    background:rgba(6,20,29,.78);
-    border-radius:15px;
-    padding:15px;
-    text-align:center;
-}
-.metric-value { font-size:25px; font-weight:800; color:#65ffc6; }
-.metric-label { color:#8da5b5; font-size:12px; }
-.stButton > button { border-radius:12px; border:1px solid rgba(0,255,170,.25); }
-</style>
-""", unsafe_allow_html=True)
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
-# -----------------------------
-# Configuration
-# -----------------------------
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 
-def secret(name, default=None):
-    try:
-        return st.secrets.get(name, default)
-    except Exception:
-        return default
-
-GROQ_API_KEY = secret("GROQ_API_KEY")
-GROQ_MODEL = secret("GROQ_MODEL", DEFAULT_MODEL)
-
-AGENTS = [
-    ("📧", "Email Agent", "Phishing, sender clues, urgency and social engineering"),
-    ("🔗", "URL Agent", "URL structure, domains, redirects and suspicious patterns"),
-    ("📁", "File Agent", "Filename, extension, metadata and supplied file indicators"),
-    ("🦠", "Malware Agent", "Malware-family and behavior indicators from supplied evidence"),
-    ("🔎", "IOC Agent", "IP addresses, domains, URLs, hashes and other indicators"),
-    ("🧠", "Threat Intel Agent", "Threat patterns and MITRE ATT&CK-oriented correlation"),
-    ("⚖️", "Risk Agent", "Evidence-based risk and confidence assessment"),
-    ("🛡️", "SOC Analyst Agent", "Final incident summary and defensive recommendations"),
-]
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY")
+GROQ_MODEL = st.secrets.get("GROQ_MODEL", DEFAULT_MODEL)
 
 
-def groq_call(system_prompt: str, user_prompt: str) -> str:
-    client = Groq(api_key=GROQ_API_KEY)
-    result = client.chat.completions.create(
-        model=GROQ_MODEL,
-        temperature=0.1,
-        max_tokens=1800,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-    )
-    return result.choices[0].message.content
+# ============================================================
+# CYBER UI
+# ============================================================
 
-
-def sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def run_agents(evidence: str, filename: str = ""):
-    system = """You are a defensive cybersecurity analyst in CyberShield.
-Analyze ONLY the evidence provided. Do not invent external reputation results,
-sandbox results, threat-intelligence hits, or observations. Do not execute files.
-Clearly distinguish facts, hypotheses, and uncertainty. Give defensive analysis only."""
-
-    prompts = {
-        "Email Agent": f"""Analyze this evidence for phishing and social-engineering indicators.
-Look for sender impersonation, urgency, credential requests, suspicious language,
-attachments and links.
-
-EVIDENCE:\n{evidence}""",
-
-        "URL Agent": f"""Analyze supplied URLs/domains for suspicious structure,
-lookalikes, encoding, redirects, credential harvesting and other indicators.
-Do not claim external reputation results.
-
-EVIDENCE:\n{evidence}""",
-
-        "File Agent": f"""Analyze supplied file information defensively.
-Discuss filename, extension, SHA-256, metadata and any static indicators present.
-Never claim that the file was executed.
-
-FILENAME: {filename}\nEVIDENCE:\n{evidence}""",
-
-        "Malware Agent": f"""Assess possible malware indicators including trojan,
-ransomware, worm, downloader, persistence or command-and-control behavior only
-when supported by the evidence.
-
-EVIDENCE:\n{evidence}""",
-
-        "IOC Agent": f"""Extract IOCs from the evidence and categorize them as IP,
-domain, URL, email, hash, filename or other useful indicator. Say 'none found'
-when appropriate.
-
-EVIDENCE:\n{evidence}""",
-
-        "Threat Intel Agent": f"""Correlate the supplied evidence with defensive
-threat-intelligence concepts and MITRE ATT&CK techniques where reasonably supported.
-Do not pretend to have queried an external database.
-
-EVIDENCE:\n{evidence}""",
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background:
+            radial-gradient(circle at top right, #0b2435 0%, #050914 40%, #03060d 100%);
+        color: #e8f0f7;
     }
 
-    results = {}
-    for name, prompt in prompts.items():
-        results[name] = groq_call(system, prompt)
+    .main-title {
+        font-size: 42px;
+        font-weight: 800;
+        color: #00e6a8;
+        margin-bottom: 0;
+    }
 
-    combined = "\n\n".join(f"### {name}\n{text}" for name, text in results.items())
+    .subtitle {
+        color: #8fa7b8;
+        font-size: 16px;
+        margin-top: 0;
+    }
 
-    results["Risk Agent"] = groq_call(system, f"""Review these specialist findings:\n\n{combined}
+    .agent-box {
+        background: rgba(8, 21, 33, 0.85);
+        border: 1px solid #17364a;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 10px;
+    }
 
-Return:
-1. Risk: Informational / Low / Medium / High / Critical
-2. Confidence: Low / Medium / High
-3. Strongest evidence
-4. Important uncertainty
-5. Defensive next steps
+    .status-online {
+        color: #00e6a8;
+        font-weight: bold;
+    }
 
-Do not invent external results.""")
+    .status-warning {
+        color: #ffc857;
+        font-weight: bold;
+    }
 
-    results["SOC Analyst Agent"] = groq_call(system, f"""Act as the senior SOC analyst.
-Use the following specialist findings and risk assessment:
+    .risk-high {
+        color: #ff5c5c;
+        font-weight: bold;
+    }
 
-{combined}
+    .risk-medium {
+        color: #ffc857;
+        font-weight: bold;
+    }
 
-RISK ASSESSMENT:
-{results['Risk Agent']}
+    .risk-low {
+        color: #00e6a8;
+        font-weight: bold;
+    }
 
-Produce:
-- Executive summary
-- Likely threat type
-- Key IOCs
-- Evidence
-- Uncertainty / limitations
-- Recommended containment
-- Recommended investigation steps
-- MITRE ATT&CK techniques only where supported
-
-Do not claim that a response action has already been performed.""")
-    return results
+    .stButton > button {
+        border-radius: 8px;
+        font-weight: 700;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
-def detect_risk(text: str) -> str:
-    lower = text.lower()
-    for level in ["critical", "high", "medium", "low", "informational"]:
-        if level in lower:
-            return level.title()
-    return "Unknown"
+# ============================================================
+# HEADER
+# ============================================================
 
-# -----------------------------
-# Header
-# -----------------------------
-st.markdown("""
-<div class="hero">
-  <h1>🛡️ CYBERSHIELD</h1>
-  <p>Multi-Agent Cybersecurity Analysis Platform • Phishing • Malware • IOC • Threat Intelligence • SOC</p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    '<div class="main-title">🛡️ CyberShield Multi-Agent SOC</div>',
+    unsafe_allow_html=True,
+)
 
-with st.sidebar:
-    st.markdown("## 🛡️ CyberShield")
-    st.caption("AI-assisted defensive security laboratory")
-    st.divider()
-    page = st.radio("Workspace", ["🔬 Investigation", "🤖 Agent Center", "ℹ️ About"])
-    st.divider()
-    st.markdown("### System Status")
-    st.success("UI: ONLINE")
-    st.info(f"Model: {GROQ_MODEL}")
-    if GROQ_API_KEY:
-        st.success("Groq API: CONFIGURED")
-    else:
-        st.warning("Groq API: NOT CONFIGURED")
-    st.caption("Never commit your API key to GitHub.")
-
-if page == "🤖 Agent Center":
-    st.subheader("🤖 CyberShield Agent Center")
-    cols = st.columns(2)
-    for i, (icon, name, description) in enumerate(AGENTS):
-        with cols[i % 2]:
-            st.markdown(f"<div class='card'><h4>{icon} {name}</h4><p>{description}</p></div>", unsafe_allow_html=True)
-    st.info("The MVP uses Groq for reasoning. Production malware sandboxing should be isolated from the Streamlit host.")
-    st.stop()
-
-if page == "ℹ️ About":
-    st.subheader("About CyberShield")
-    st.write("CyberShield is an AI-assisted defensive investigation dashboard. Specialist agents examine supplied evidence, then a risk agent and SOC analyst agent correlate the findings.")
-    st.markdown("### Architecture")
-    st.code("Evidence → Specialist Agents → Risk/Correlation → SOC Analyst → Report")
-    st.markdown("### Safety boundary")
-    st.warning("This MVP never executes uploaded files. Do not use it as a production malware sandbox. Add an isolated sandbox service later.")
-    st.stop()
-
-# -----------------------------
-# Investigation workspace
-# -----------------------------
-st.subheader("🔬 New Security Investigation")
-
-left, right = st.columns([1.35, 1])
-with left:
-    evidence = st.text_area(
-        "Paste suspicious email, URL, log excerpt, IOC list, or analyst notes",
-        height=280,
-        placeholder="Example:\nFrom: security@example.com\nSubject: Urgent account verification\nPlease verify your account immediately...\nhttps://example.invalid/login"
-    )
-
-with right:
-    uploaded = st.file_uploader(
-        "Optional evidence file",
-        type=["txt", "csv", "log", "json", "pdf", "docx", "xlsx", "zip", "exe", "dll"],
-        help="The MVP calculates file metadata/hash but does not execute the file."
-    )
-    filename = ""
-    if uploaded:
-        filename = uploaded.name
-        data = uploaded.getvalue()
-        file_hash = sha256(data)
-        st.markdown(f"**File:** `{filename}`")
-        st.markdown(f"**Size:** `{len(data):,} bytes`")
-        st.markdown(f"**SHA-256:** `{file_hash}`")
-        if not evidence.strip():
-            evidence = f"Uploaded file: {filename}\nSize: {len(data)} bytes\nSHA-256: {file_hash}\nExtension: {Path(filename).suffix}\nThe file was not executed."
+st.markdown(
+    '<div class="subtitle">AI-assisted defensive cybersecurity investigation platform</div>',
+    unsafe_allow_html=True,
+)
 
 st.divider()
 
-run = st.button("🚀 RUN MULTI-AGENT ANALYSIS", type="primary", use_container_width=True)
 
-if run:
-    if not evidence.strip():
-        st.error("Please provide evidence or upload a file.")
-        st.stop()
-    if not GROQ_API_KEY:
-        st.error("Groq API key is missing. Configure GROQ_API_KEY in .streamlit/secrets.toml locally or in Streamlit Cloud Secrets.")
-        st.stop()
+# ============================================================
+# SIDEBAR
+# ============================================================
 
-    case_id = "CS-" + datetime.now().strftime("%Y%m%d-%H%M%S")
-    progress = st.progress(0)
-    status = st.empty()
-    status.info("🧠 Starting specialist agents...")
-    progress.progress(10)
+with st.sidebar:
 
-    try:
-        with st.spinner("Agents are analyzing the evidence..."):
-            results = run_agents(evidence, filename)
-        progress.progress(100)
-        status.success("✅ Multi-agent investigation completed")
-    except Exception as exc:
-        st.error(f"Analysis failed: {exc}")
-        st.stop()
+    st.header("⚙️ SOC Status")
 
-    risk = detect_risk(results.get("Risk Agent", ""))
+    if GROQ_API_KEY:
+        st.markdown(
+            '<span class="status-online">● Groq API: CONFIGURED</span>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<span class="status-warning">● Groq API: NOT CONFIGURED</span>',
+            unsafe_allow_html=True,
+        )
 
-    st.markdown(f"### Case `{case_id}`")
-    m1, m2, m3, m4 = st.columns(4)
-    metrics = [(m1, risk, "Risk Level"), (m2, "8", "Agents"), (m3, "Groq", "AI Engine"), (m4, "NO", "Host Execution")]
-    for box, value, label in metrics:
-        with box:
-            st.markdown(f"<div class='metric'><div class='metric-value'>{value}</div><div class='metric-label'>{label}</div></div>", unsafe_allow_html=True)
+    st.write(f"Model: `{GROQ_MODEL}`")
 
     st.divider()
-    st.subheader("🧠 Specialist Findings")
-    for icon, name, _ in AGENTS[:6]:
-        with st.expander(f"{icon} {name}"):
-            st.markdown(results.get(name, "No result."))
 
-    st.subheader("⚖️ Risk Assessment")
-    st.markdown(results.get("Risk Agent", "No risk assessment."))
+    st.subheader("🤖 Active Agents")
 
-    st.subheader("🛡️ Final SOC Analyst Report")
-    st.markdown(results.get("SOC Analyst Agent", "No report generated."))
+    agents = [
+        "Email / Phishing Agent",
+        "URL Agent",
+        "File Agent",
+        "Malware Agent",
+        "IOC Agent",
+        "Threat Intelligence Agent",
+        "Risk Agent",
+        "SOC Analyst Agent",
+    ]
 
-    report = {
-        "case_id": case_id,
-        "timestamp": datetime.now().isoformat(),
-        "filename": filename,
-        "risk": risk,
-        "agents": results,
-        "host_execution": False,
-    }
-    st.download_button(
-        "📥 Download JSON Investigation Report",
-        json.dumps(report, indent=2),
-        file_name=f"{case_id}.json",
-        mime="application/json",
+    for agent in agents:
+        st.write(f"✓ {agent}")
+
+    st.divider()
+
+    st.caption(
+        "Defensive analysis only. Uploaded files are hashed and inspected as metadata/text. "
+        "CyberShield does not execute unknown files."
     )
 
-st.caption("CyberShield MVP • Defensive analysis only • Never execute suspicious files on the host.")
+
+# ============================================================
+# SECURITY CHECK
+# ============================================================
+
+if not GROQ_API_KEY:
+    st.error(
+        "GROQ_API_KEY is not configured. Add it in "
+        "Streamlit → Settings → Secrets."
+    )
+    st.stop()
+
+
+# ============================================================
+# GROQ CLIENT
+# ============================================================
+
+client = Groq(api_key=GROQ_API_KEY)
+
+
+# ============================================================
+# TOKEN / INPUT LIMITS
+# ============================================================
+
+# Keep evidence short so every agent request remains small.
+MAX_INPUT_CHARS = 3500
+
+# Specialist agents should answer briefly.
+SPECIALIST_MAX_TOKENS = 350
+
+# Risk and SOC agents need slightly more space.
+RISK_MAX_TOKENS = 450
+SOC_MAX_TOKENS = 650
+
+
+def clean_text(text, limit=MAX_INPUT_CHARS):
+    """Normalize and truncate investigation evidence."""
+
+    if not text:
+        return ""
+
+    text = str(text)
+
+    # Remove excessive whitespace
+    text = " ".join(text.split())
+
+    if len(text) > limit:
+        text = text[:limit] + "\n[Evidence truncated]"
+
+    return text
+
+
+# ============================================================
+# GROQ CALL
+# ============================================================
+
+def call_groq(system_prompt, user_prompt, max_tokens=350):
+    """
+    Make a compact Groq request.
+
+    Small prompts and small outputs are intentional because
+    the free/on-demand organization limit is currently 8K TPM.
+    """
+
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
+        temperature=0.1,
+        max_tokens=max_tokens,
+        messages=[
+            {
+                "role": "system",
+                "content": clean_text(system_prompt, 1800),
+            },
+            {
+                "role": "user",
+                "content": clean_text(user_prompt, MAX_INPUT_CHARS),
+            },
+        ],
+    )
+
+    return response.choices[0].message.content.strip()
+
+
+# ============================================================
+# SPECIALIST AGENT
+# ============================================================
+
+def specialist_agent(agent_name, evidence, task):
+
+    system_prompt = f"""
+You are the {agent_name} in a defensive SOC.
+
+Task:
+{task}
+
+Rules:
+- Analyze only the supplied evidence.
+- Do not invent reputation, sandbox, WHOIS, VirusTotal, or external lookup results.
+- Clearly say when evidence is insufficient.
+- Focus on defensive cybersecurity.
+- Return concise findings.
+- Do not provide malware execution instructions.
+
+Return:
+1. Finding
+2. Evidence
+3. Risk: Low/Medium/High
+4. Recommended action
+"""
+
+    user_prompt = f"""
+Investigation evidence:
+
+{clean_text(evidence)}
+
+Provide a concise SOC finding.
+"""
+
+    return call_groq(
+        system_prompt,
+        user_prompt,
+        SPECIALIST_MAX_TOKENS,
+    )
+
+
+# ============================================================
+# RISK AGENT
+# ============================================================
+
+def risk_agent(findings):
+
+    compact_findings = clean_text(findings, 5000)
+
+    system_prompt = """
+You are the Risk Agent of a defensive SOC.
+
+Combine the specialist findings.
+
+Determine:
+- Overall risk: Low, Medium, or High
+- Main reason
+- Most important indicators
+- Immediate defensive action
+
+Do not invent facts.
+Do not claim external reputation checks that were not supplied.
+
+Keep the answer concise.
+"""
+
+    user_prompt = f"""
+Specialist findings:
+
+{compact_findings}
+"""
+
+    return call_groq(
+        system_prompt,
+        user_prompt,
+        RISK_MAX_TOKENS,
+    )
+
+
+# ============================================================
+# SOC ANALYST AGENT
+# ============================================================
+
+def soc_analyst(original_evidence, specialist_findings, risk):
+
+    evidence = clean_text(original_evidence, 2200)
+    findings = clean_text(specialist_findings, 4000)
+    risk = clean_text(risk, 1800)
+
+    system_prompt = """
+You are the senior SOC Analyst.
+
+Create a concise defensive incident assessment.
+
+Include:
+- Executive summary
+- Risk level
+- Key findings
+- Indicators
+- Recommended containment
+- Recommended investigation
+- Confidence
+
+Important:
+- Use only supplied evidence.
+- Do not invent external intelligence.
+- If an indicator needs external validation, say so.
+- Do not provide instructions for executing malware.
+"""
+
+    user_prompt = f"""
+ORIGINAL EVIDENCE:
+{evidence}
+
+SPECIALIST FINDINGS:
+{findings}
+
+RISK ASSESSMENT:
+{risk}
+
+Produce the final SOC assessment.
+"""
+
+    return call_groq(
+        system_prompt,
+        user_prompt,
+        SOC_MAX_TOKENS,
+    )
+
+
+# ============================================================
+# FILE HASHING
+# ============================================================
+
+def calculate_sha256(uploaded_file):
+
+    data = uploaded_file.getvalue()
+
+    sha256 = hashlib.sha256(data).hexdigest()
+
+    return sha256, len(data)
+
+
+# ============================================================
+# FILE METADATA
+# ============================================================
+
+def get_file_metadata(uploaded_file):
+
+    sha256, size = calculate_sha256(uploaded_file)
+
+    filename = uploaded_file.name
+
+    extension = ""
+
+    if "." in filename:
+        extension = filename.rsplit(".", 1)[1].lower()
+
+    return {
+        "filename": filename,
+        "size_bytes": size,
+        "extension": extension,
+        "sha256": sha256,
+        "content_type": uploaded_file.type,
+    }
+
+
+# ============================================================
+# INVESTIGATION INPUT
+# ============================================================
+
+st.header("🔎 New Investigation")
+
+input_tab, file_tab = st.tabs(
+    [
+        "📝 Text / Email / IOC",
+        "📁 File Metadata",
+    ]
+)
+
+
+# ============================================================
+# TEXT INVESTIGATION
+# ============================================================
+
+with input_tab:
+
+    st.write(
+        "Paste a phishing email, suspicious URL, IOC, alert, log excerpt, "
+        "or other defensive cybersecurity evidence."
+    )
+
+    investigation_text = st.text_area(
+        "Investigation Evidence",
+        height=220,
+        placeholder=(
+            "Example:\n"
+            "From: security-alert@example.com\n"
+            "Subject: Urgent account verification\n"
+            "Click this link immediately: http://example.com/login"
+        ),
+    )
+
+    analyze_text = st.button(
+        "🚀 Analyze with Multi-Agent SOC",
+        type="primary",
+        use_container_width=True,
+    )
+
+
+# ============================================================
+# FILE INVESTIGATION
+# ============================================================
+
+with file_tab:
+
+    st.write(
+        "Upload a file for defensive metadata and hash analysis. "
+        "The application does not execute uploaded files."
+    )
+
+    uploaded_file = st.file_uploader(
+        "Upload file",
+        type=[
+            "txt",
+            "csv",
+            "log",
+            "json",
+            "pdf",
+            "docx",
+            "xlsx",
+            "zip",
+            "exe",
+            "dll",
+        ],
+    )
+
+    analyze_file = st.button(
+        "🔬 Analyze File",
+        type="primary",
+        use_container_width=True,
+    )
+
+
+# ============================================================
+# FILE ANALYSIS
+# ============================================================
+
+if analyze_file:
+
+    if uploaded_file is None:
+        st.warning("Please upload a file first.")
+        st.stop()
+
+    metadata = get_file_metadata(uploaded_file)
+
+    st.subheader("📋 File Metadata")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "File Size",
+            f"{metadata['size_bytes']:,} bytes",
+        )
+
+    with col2:
+        st.metric(
+            "Type",
+            metadata["extension"].upper()
+            if metadata["extension"]
+            else "Unknown",
+        )
+
+    with col3:
+        st.metric(
+            "Hash",
+            metadata["sha256"][:12] + "...",
+        )
+
+    st.code(
+        metadata["sha256"],
+        language="text",
+    )
+
+    evidence = f"""
+Filename: {metadata['filename']}
+File size: {metadata['size_bytes']} bytes
+Extension: {metadata['extension']}
+Content type: {metadata['content_type']}
+SHA-256: {metadata['sha256']}
+"""
+
+    investigation_text = evidence
+    analyze_text = True
+
+
+# ============================================================
+# RUN MULTI-AGENT ANALYSIS
+# ============================================================
+
+if analyze_text:
+
+    if not investigation_text or not investigation_text.strip():
+        st.warning("Please provide investigation evidence.")
+        st.stop()
+
+    evidence = clean_text(investigation_text)
+
+    st.divider()
+
+    st.subheader("🤖 Multi-Agent Investigation")
+
+    progress = st.progress(0)
+    status = st.empty()
+
+    # --------------------------------------------------------
+    # Specialist definitions
+    # --------------------------------------------------------
+
+    specialist_definitions = [
+        (
+            "Email / Phishing Agent",
+            "Identify phishing characteristics, social engineering, suspicious sender details, urgency, credential theft indicators, and email anomalies.",
+        ),
+        (
+            "URL Agent",
+            "Identify suspicious URLs, domains, redirects, URL obfuscation, phishing patterns, and indicators requiring external validation.",
+        ),
+        (
+            "File Agent",
+            "Assess supplied file metadata, filename, extension, hash, and any supplied textual evidence for suspicious characteristics.",
+        ),
+        (
+            "Malware Agent",
+            "Look for evidence suggesting malware, trojans, worms, payload delivery, persistence, or malicious behavior. Do not assume malware without evidence.",
+        ),
+        (
+            "IOC Agent",
+            "Extract and classify possible IP addresses, domains, URLs, hashes, email addresses, filenames, and other indicators of compromise.",
+        ),
+        (
+            "Threat Intelligence Agent",
+            "Assess the supplied indicators from the evidence. Identify what would require external threat-intelligence validation. Do not invent reputation data.",
+        ),
+    ]
+
+    specialist_results = []
+
+    total_agents = len(specialist_definitions)
+
+    # --------------------------------------------------------
+    # Run specialists
+    # --------------------------------------------------------
+
+    for index, (agent_name, task) in enumerate(
+        specialist_definitions,
+        start=1,
+    ):
+
+        status.info(
+            f"Running {agent_name}..."
+        )
+
+        result = specialist_agent(
+            agent_name,
+            evidence,
+            task,
+        )
+
+        specialist_results.append(
+            {
+                "agent": agent_name,
+                "finding": result,
+            }
+        )
+
+        progress.progress(
+            int((index / (total_agents + 2)) * 100)
+        )
+
+    # --------------------------------------------------------
+    # Combine specialist results
+    # --------------------------------------------------------
+
+    findings_text = "\n\n".join(
+        [
+            f"[{item['agent']}]\n{item['finding']}"
+            for item in specialist_results
+        ]
+    )
+
+    # Keep combined findings compact.
+    findings_text = clean_text(
+        findings_text,
+        5000,
+    )
+
+    # --------------------------------------------------------
+    # Risk Agent
+    # --------------------------------------------------------
+
+    status.info("Running Risk Agent...")
+
+    risk_result = risk_agent(
+        findings_text
+    )
+
+    progress.progress(
+        int((8 / 8) * 100)
+    )
+
+    # --------------------------------------------------------
+    # SOC Analyst
+    # --------------------------------------------------------
+
+    status.info(
+        "Running SOC Analyst Agent..."
+    )
+
+    final_report = soc_analyst(
+        evidence,
+        findings_text,
+        risk_result,
+    )
+
+    progress.progress(100)
+
+    status.success(
+        "Multi-agent investigation completed."
+    )
+
+    # ========================================================
+    # DISPLAY SPECIALIST RESULTS
+    # ========================================================
+
+    st.divider()
+
+    st.subheader("🧩 Specialist Agent Findings")
+
+    for item in specialist_results:
+
+        with st.expander(
+            f"🤖 {item['agent']}",
+            expanded=False,
+        ):
+
+            st.write(
+                item["finding"]
+            )
+
+    # ========================================================
+    # RISK ASSESSMENT
+    # ========================================================
+
+    st.divider()
+
+    st.subheader("⚠️ Risk Assessment")
+
+    st.markdown(
+        risk_result
+    )
+
+    # ========================================================
+    # FINAL SOC REPORT
+    # ========================================================
+
+    st.divider()
+
+    st.subheader("🛡️ SOC Analyst Report")
+
+    st.markdown(
+        final_report
+    )
+
+    # ========================================================
+    # JSON REPORT
+    # ========================================================
+
+    report = {
+        "application": "CyberShield Multi-Agent SOC",
+        "model": GROQ_MODEL,
+        "investigation": evidence,
+        "specialist_agents": specialist_results,
+        "risk_assessment": risk_result,
+        "soc_analyst_report": final_report,
+    }
+
+    report_json = json.dumps(
+        report,
+        indent=2,
+        ensure_ascii=False,
+    )
+
+    st.download_button(
+        label="⬇️ Download JSON Investigation Report",
+        data=report_json,
+        file_name="cybershield_investigation_report.json",
+        mime="application/json",
+        use_container_width=True,
+    )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.divider()
+
+st.caption(
+    "CyberShield Multi-Agent SOC • Defensive cybersecurity analysis • "
+    "AI-generated findings require analyst validation."
+)
