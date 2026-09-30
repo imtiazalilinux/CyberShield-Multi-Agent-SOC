@@ -739,12 +739,12 @@ if analyze_text:
         st.warning("Please provide investigation evidence.")
         st.stop()
 
-    evidence = clean_text(investigation_text)
-    
-    # Extract IOCs before running the AI agents
-    iocs = extract_iocs(evidence)
+evidence = clean_text(investigation_text)
 
-  display_ioc_summary(iocs)
+# Extract IOCs before running the AI agents
+iocs = extract_iocs(evidence)
+
+display_ioc_summary(iocs)
 
 ioc_context = json.dumps(
     iocs,
