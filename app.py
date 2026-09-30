@@ -753,16 +753,16 @@ ioc_context = json.dumps(
 )
 st.divider()
 
-    st.subheader("🤖 Multi-Agent Investigation")
+st.subheader("🤖 Multi-Agent Investigation")
 
-    progress = st.progress(0)
-    status = st.empty()
+progress = st.progress(0)
+status = st.empty()
 
-    # --------------------------------------------------------
-    # Specialist definitions
-    # --------------------------------------------------------
+# --------------------------------------------------------
+# Specialist definitions
+# --------------------------------------------------------
 
-    specialist_definitions = [
+specialist_definitions = [
         (
             "Email / Phishing Agent",
             "Identify phishing characteristics, social engineering, suspicious sender details, urgency, credential theft indicators, and email anomalies.",
