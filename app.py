@@ -373,7 +373,188 @@ Produce the final SOC assessment.
         SOC_MAX_TOKENS,
     )
 
+# ============================================================
+# IOC EXTRACTION
+# ============================================================
 
+def extract_iocs(text):
+    """
+    Extract common Indicators of Compromise (IOCs)
+    from investigation evidence.
+
+    This is local pattern matching only.
+    No external reputation lookup is performed.
+    """
+
+    if not text:
+        return {
+            "ip_addresses": [],
+            "urls": [],
+            "domains": [],
+            "email_addresses": [],
+            "md5": [],
+            "sha1": [],
+            "sha256": [],
+        }
+
+    # IPv4 addresses
+    ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+
+    # URLs
+    url_pattern = r"https?://[^\s<>\"]+"
+
+    # Email addresses
+    email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+
+    # MD5 = 32 hexadecimal characters
+    md5_pattern = r"\b[a-fA-F0-9]{32}\b"
+
+    # SHA-1 = 40 hexadecimal characters
+    sha1_pattern = r"\b[a-fA-F0-9]{40}\b"
+
+    # SHA-256 = 64 hexadecimal characters
+    sha256_pattern = r"\b[a-fA-F0-9]{64}\b"
+
+    ips = sorted(set(re.findall(ip_pattern, text)))
+
+    urls = sorted(set(re.findall(url_pattern, text)))
+
+    emails = sorted(set(re.findall(email_pattern, text)))
+
+    md5_hashes = sorted(set(re.findall(md5_pattern, text)))
+
+    sha1_hashes = sorted(set(re.findall(sha1_pattern, text)))
+
+    sha256_hashes = sorted(set(re.findall(sha256_pattern, text)))
+
+    # Extract domains from URLs
+    domains = []
+
+    for url in urls:
+        match = re.search(
+            r"https?://([^/:?#]+)",
+            url,
+            re.IGNORECASE,
+        )
+
+        if match:
+            domains.append(match.group(1).lower())
+
+    # Also detect standalone domains
+    domain_pattern = (
+        r"\b(?:[a-zA-Z0-9-]+\.)+"
+        r"(?:com|net|org|info|biz|io|co|pk|uk|us|gov|edu)\b"
+    )
+
+    standalone_domains = re.findall(
+        domain_pattern,
+        text,
+        re.IGNORECASE,
+    )
+
+    domains.extend(
+        [domain.lower() for domain in standalone_domains]
+    )
+
+    domains = sorted(set(domains))
+
+    return {
+        "ip_addresses": ips,
+        "urls": urls,
+        "domains": domains,
+        "email_addresses": emails,
+        "md5": md5_hashes,
+        "sha1": sha1_hashes,
+        "sha256": sha256_hashes,
+    }
+
+
+def display_ioc_summary(iocs):
+    """
+    Display extracted IOCs in the Streamlit interface.
+    """
+
+    total_iocs = sum(
+        len(values)
+        for values in iocs.values()
+    )
+
+    st.subheader("🔎 IOC Extraction")
+
+    if total_iocs == 0:
+        st.info(
+            "No common IOCs were detected in the supplied evidence."
+        )
+        return
+
+    st.success(
+        f"{total_iocs} IOC(s) detected"
+    )
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "IP Addresses",
+            len(iocs["ip_addresses"]),
+        )
+
+    with col2:
+        st.metric(
+            "URLs",
+            len(iocs["urls"]),
+        )
+
+    with col3:
+        st.metric(
+            "Domains",
+            len(iocs["domains"]),
+        )
+
+    with col4:
+        st.metric(
+            "Hashes",
+            (
+                len(iocs["md5"])
+                + len(iocs["sha1"])
+                + len(iocs["sha256"])
+            ),
+        )
+
+    if iocs["ip_addresses"]:
+        st.write("**🌐 IP Addresses**")
+        for item in iocs["ip_addresses"]:
+            st.code(item)
+
+    if iocs["urls"]:
+        st.write("**🔗 URLs**")
+        for item in iocs["urls"]:
+            st.code(item)
+
+    if iocs["domains"]:
+        st.write("**🏷️ Domains**")
+        for item in iocs["domains"]:
+            st.code(item)
+
+    if iocs["email_addresses"]:
+        st.write("**📧 Email Addresses**")
+        for item in iocs["email_addresses"]:
+            st.code(item)
+
+    if iocs["md5"]:
+        st.write("**🔐 MD5**")
+        for item in iocs["md5"]:
+            st.code(item)
+
+    if iocs["sha1"]:
+        st.write("**🔐 SHA-1**")
+        for item in iocs["sha1"]:
+            st.code(item)
+
+    if iocs["sha256"]:
+        st.write("**🔐 SHA-256**")
+        for item in iocs["sha256"]:
+            st.code(item)
 # ============================================================
 # FILE HASHING
 # ============================================================
