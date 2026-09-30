@@ -789,7 +789,7 @@ specialist_definitions = [
         ),
     ]
 
-    specialist_results = []
+specialist_results = []
 
     total_agents = len(specialist_definitions)
 
