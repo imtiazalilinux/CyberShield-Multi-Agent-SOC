@@ -820,7 +820,7 @@ for index, (agent_name, task) in enumerate(
             }
         )
 
-        progress.progress(
+    progress.progress(
             int((index / (total_agents + 2)) * 100)
         )
 
