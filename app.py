@@ -813,7 +813,7 @@ for index, (agent_name, task) in enumerate(
         ioc_context,
     )
 
-        specialist_results.append(
+    specialist_results.append(
             {
                 "agent": agent_name,
                 "finding": result,
