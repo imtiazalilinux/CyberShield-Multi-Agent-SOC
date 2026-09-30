@@ -937,14 +937,13 @@ for index, (agent_name, task) in enumerate(
         ensure_ascii=False,
     )
 
-    st.download_button(
-        label="⬇️ Download JSON Investigation Report",
-        key="download_json_investigation_report",
-        data=report_json,
-        file_name="cybershield_investigation_report.json",
-        mime="application/json",
-        use_container_width=True,
-    )
+st.download_button(
+    label="⬇️ Download JSON Investigation Report",
+    data=report_json,
+    file_name="cybershield_investigation_report.json",
+    mime="application/json",
+    use_container_width=True,
+)
 
 
 # ============================================================
