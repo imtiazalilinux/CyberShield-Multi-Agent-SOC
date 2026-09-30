@@ -745,6 +745,11 @@ if analyze_text:
     iocs = extract_iocs(evidence)
 
     display_ioc_summary(iocs)
+        ioc_context = json.dumps(
+        iocs,
+        indent=2,
+        ensure_ascii=False,
+    )
     st.divider()
 
     st.subheader("🤖 Multi-Agent Investigation")
@@ -800,10 +805,12 @@ if analyze_text:
             f"Running {agent_name}..."
         )
 
-        result = specialist_agent(
-            agent_name,
-            evidence,
-            task,
+       result = specialist_agent(
+    agent_name,
+    evidence,
+    task,
+    ioc_context,
+
         )
 
         specialist_results.append(
