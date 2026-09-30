@@ -744,12 +744,13 @@ if analyze_text:
     # Extract IOCs before running the AI agents
     iocs = extract_iocs(evidence)
 
-    display_ioc_summary(iocs)
-        ioc_context = json.dumps(
-        iocs,
-        indent=2,
-        ensure_ascii=False,
-    )
+  display_ioc_summary(iocs)
+
+ioc_context = json.dumps(
+    iocs,
+    indent=2,
+    ensure_ascii=False,
+)
     st.divider()
 
     st.subheader("🤖 Multi-Agent Investigation")
