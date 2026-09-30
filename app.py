@@ -247,7 +247,7 @@ def call_groq(system_prompt, user_prompt, max_tokens=350):
 # SPECIALIST AGENT
 # ============================================================
 
-def specialist_agent(agent_name, evidence, task):
+def specialist_agent(agent_name, evidence, task, ioc_context):
 
     system_prompt = f"""
 You are the {agent_name} in a defensive SOC.
@@ -270,10 +270,17 @@ Return:
 4. Recommended action
 """
 
-    user_prompt = f"""
+   user_prompt = f"""
 Investigation evidence:
 
 {clean_text(evidence)}
+
+Extracted IOC information:
+
+{clean_text(ioc_context, 1800)}
+
+Use the extracted IOCs as supporting evidence.
+If an IOC has not been externally verified, do not claim that it is malicious.
 
 Provide a concise SOC finding.
 """
