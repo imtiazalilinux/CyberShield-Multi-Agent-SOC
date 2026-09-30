@@ -751,7 +751,7 @@ ioc_context = json.dumps(
     indent=2,
     ensure_ascii=False,
 )
-    st.divider()
+st.divider()
 
     st.subheader("🤖 Multi-Agent Investigation")
 
