@@ -958,11 +958,9 @@ if analyze_text:
         not investigation_text
         or not investigation_text.strip()
     ):
-
         st.warning(
             "Please provide investigation evidence."
         )
-
         st.stop()
 
     evidence = clean_text(
@@ -998,7 +996,6 @@ if analyze_text:
     )
 
     progress = st.progress(0)
-
     status = st.empty()
 
     # --------------------------------------------------------
@@ -1066,50 +1063,47 @@ if analyze_text:
     # Run specialist agents
     # --------------------------------------------------------
 
-# --------------------------------------------------------
-# Run specialist agents
-# --------------------------------------------------------
-
-for index, (
-    agent_name,
-    task,
-) in enumerate(
-    specialist_definitions,
-    start=1,
-):
-
-    status.info(
-        f"Running {agent_name}..."
-    )
-
-    result = specialist_agent(
+    for index, (
         agent_name,
-        evidence,
         task,
-        ioc_context,
-    )
+    ) in enumerate(
+        specialist_definitions,
+        start=1,
+    ):
 
-    st.write(
-        "DEBUG RESULT:",
-        repr(result),
-    )
-
-    specialist_results.append(
-        {
-            "agent": agent_name,
-            "finding": result,
-        }
-    )
-
-    progress.progress(
-        int(
-            (
-                index
-                / (total_agents + 2)
-            )
-            * 100
+        status.info(
+            f"Running {agent_name}..."
         )
-    )
+
+        result = specialist_agent(
+            agent_name,
+            evidence,
+            task,
+            ioc_context,
+        )
+
+        # Temporary diagnostic
+        st.write(
+            "DEBUG RESULT:",
+            repr(result),
+        )
+
+        specialist_results.append(
+            {
+                "agent": agent_name,
+                "finding": result,
+            }
+        )
+
+        progress.progress(
+            int(
+                (
+                    index
+                    / (total_agents + 2)
+                )
+                * 100
+            )
+        )
 
     # --------------------------------------------------------
     # Combine specialist results
@@ -1143,11 +1137,7 @@ for index, (
         ioc_context,
     )
 
-    progress.progress(
-        int(
-            (8 / 8) * 100
-        )
-    )
+    progress.progress(87)
 
     # --------------------------------------------------------
     # SOC Analyst
