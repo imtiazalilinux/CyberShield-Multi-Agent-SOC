@@ -321,6 +321,13 @@ Keep the answer concise.
 Specialist findings:
 
 {compact_findings}
+
+Extracted IOC information:
+
+{clean_text(ioc_context, 1800)}
+
+Use the extracted IOCs as supporting evidence.
+Do not assume that an IOC is malicious unless the supplied evidence supports that conclusion.
 """
 
     return call_groq(
