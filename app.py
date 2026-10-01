@@ -25,7 +25,10 @@ st.set_page_config(
 DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY")
-GROQ_MODEL = st.secrets.get("GROQ_MODEL", DEFAULT_MODEL)
+GROQ_MODEL = st.secrets.get(
+    "GROQ_MODEL",
+    DEFAULT_MODEL,
+)
 
 
 # ============================================================
@@ -37,7 +40,12 @@ st.markdown(
     <style>
     .stApp {
         background:
-            radial-gradient(circle at top right, #0b2435 0%, #050914 40%, #03060d 100%);
+            radial-gradient(
+                circle at top right,
+                #0b2435 0%,
+                #050914 40%,
+                #03060d 100%
+            );
         color: #e8f0f7;
     }
 
@@ -107,7 +115,9 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="subtitle">AI-assisted defensive cybersecurity investigation platform</div>',
+    '<div class="subtitle">'
+    "AI-assisted defensive cybersecurity investigation platform"
+    "</div>",
     unsafe_allow_html=True,
 )
 
@@ -124,12 +134,16 @@ with st.sidebar:
 
     if GROQ_API_KEY:
         st.markdown(
-            '<span class="status-online">● Groq API: CONFIGURED</span>',
+            '<span class="status-online">'
+            "● Groq API: CONFIGURED"
+            "</span>",
             unsafe_allow_html=True,
         )
     else:
         st.markdown(
-            '<span class="status-warning">● Groq API: NOT CONFIGURED</span>',
+            '<span class="status-warning">'
+            "● Groq API: NOT CONFIGURED"
+            "</span>",
             unsafe_allow_html=True,
         )
 
@@ -156,8 +170,9 @@ with st.sidebar:
     st.divider()
 
     st.caption(
-        "Defensive analysis only. Uploaded files are hashed and inspected as metadata/text. "
-        "CyberShield does not execute unknown files."
+        "Defensive analysis only. Uploaded files are hashed and "
+        "inspected as metadata/text. CyberShield does not execute "
+        "unknown files."
     )
 
 
@@ -177,25 +192,28 @@ if not GROQ_API_KEY:
 # GROQ CLIENT
 # ============================================================
 
-client = Groq(api_key=GROQ_API_KEY)
+client = Groq(
+    api_key=GROQ_API_KEY
+)
 
 
 # ============================================================
 # TOKEN / INPUT LIMITS
 # ============================================================
 
-# Keep evidence short so every agent request remains small.
 MAX_INPUT_CHARS = 3500
 
-# Specialist agents should answer briefly.
 SPECIALIST_MAX_TOKENS = 350
 
-# Risk and SOC agents need slightly more space.
 RISK_MAX_TOKENS = 450
+
 SOC_MAX_TOKENS = 650
 
 
-def clean_text(text, limit=MAX_INPUT_CHARS):
+def clean_text(
+    text,
+    limit=MAX_INPUT_CHARS,
+):
     """Normalize and truncate investigation evidence."""
 
     if not text:
@@ -203,11 +221,15 @@ def clean_text(text, limit=MAX_INPUT_CHARS):
 
     text = str(text)
 
-    # Remove excessive whitespace
-    text = " ".join(text.split())
+    text = " ".join(
+        text.split()
+    )
 
     if len(text) > limit:
-        text = text[:limit] + "\n[Evidence truncated]"
+        text = (
+            text[:limit]
+            + "\n[Evidence truncated]"
+        )
 
     return text
 
@@ -216,12 +238,17 @@ def clean_text(text, limit=MAX_INPUT_CHARS):
 # GROQ CALL
 # ============================================================
 
-def call_groq(system_prompt, user_prompt, max_tokens=350):
+def call_groq(
+    system_prompt,
+    user_prompt,
+    max_tokens=350,
+):
     """
     Make a compact Groq request.
 
-    Small prompts and small outputs are intentional because
-    the free/on-demand organization limit is currently 8K TPM.
+    Small prompts and outputs are intentional because
+    the free/on-demand organization limit is currently
+    8K TPM.
     """
 
     response = client.chat.completions.create(
@@ -231,23 +258,38 @@ def call_groq(system_prompt, user_prompt, max_tokens=350):
         messages=[
             {
                 "role": "system",
-                "content": clean_text(system_prompt, 1800),
+                "content": clean_text(
+                    system_prompt,
+                    1800,
+                ),
             },
             {
                 "role": "user",
-                "content": clean_text(user_prompt, MAX_INPUT_CHARS),
+                "content": clean_text(
+                    user_prompt,
+                    MAX_INPUT_CHARS,
+                ),
             },
         ],
     )
 
-    return response.choices[0].message.content.strip()
+    return (
+        response.choices[0]
+        .message.content
+        .strip()
+    )
 
 
 # ============================================================
 # SPECIALIST AGENT
 # ============================================================
 
-def specialist_agent(agent_name, evidence, task, ioc_context):
+def specialist_agent(
+    agent_name,
+    evidence,
+    task,
+    ioc_context,
+):
 
     system_prompt = f"""
 You are the {agent_name} in a defensive SOC.
@@ -257,7 +299,8 @@ Task:
 
 Rules:
 - Analyze only the supplied evidence.
-- Do not invent reputation, sandbox, WHOIS, VirusTotal, or external lookup results.
+- Do not invent reputation, sandbox, WHOIS,
+  VirusTotal, or external lookup results.
 - Clearly say when evidence is insufficient.
 - Focus on defensive cybersecurity.
 - Return concise findings.
@@ -280,7 +323,9 @@ Extracted IOC information:
 {clean_text(ioc_context, 1800)}
 
 Use the extracted IOCs as supporting evidence.
-If an IOC has not been externally verified, do not claim that it is malicious.
+
+If an IOC has not been externally verified,
+do not claim that it is malicious.
 
 Provide a concise SOC finding.
 """
@@ -291,14 +336,20 @@ Provide a concise SOC finding.
         SPECIALIST_MAX_TOKENS,
     )
 
+
 # ============================================================
 # RISK AGENT
 # ============================================================
 
+def risk_agent(
+    findings,
+    ioc_context,
+):
 
-def risk_agent(findings, ioc_context):
-
-    compact_findings = clean_text(findings, 5000)
+    compact_findings = clean_text(
+        findings,
+        5000,
+    )
 
     system_prompt = """
 You are the Risk Agent of a defensive SOC.
@@ -312,7 +363,8 @@ Determine:
 - Immediate defensive action
 
 Do not invent facts.
-Do not claim external reputation checks that were not supplied.
+Do not claim external reputation checks
+that were not supplied.
 
 Keep the answer concise.
 """
@@ -327,7 +379,9 @@ Extracted IOC information:
 {clean_text(ioc_context, 1800)}
 
 Use the extracted IOCs as supporting evidence.
-Do not assume that an IOC is malicious unless the supplied evidence supports that conclusion.
+
+Do not assume that an IOC is malicious unless
+the supplied evidence supports that conclusion.
 """
 
     return call_groq(
@@ -341,11 +395,26 @@ Do not assume that an IOC is malicious unless the supplied evidence supports tha
 # SOC ANALYST AGENT
 # ============================================================
 
-def soc_analyst(original_evidence, specialist_findings, risk):
+def soc_analyst(
+    original_evidence,
+    specialist_findings,
+    risk,
+):
 
-    evidence = clean_text(original_evidence, 2200)
-    findings = clean_text(specialist_findings, 4000)
-    risk = clean_text(risk, 1800)
+    evidence = clean_text(
+        original_evidence,
+        2200,
+    )
+
+    findings = clean_text(
+        specialist_findings,
+        4000,
+    )
+
+    risk = clean_text(
+        risk,
+        1800,
+    )
 
     system_prompt = """
 You are the senior SOC Analyst.
@@ -364,18 +433,22 @@ Include:
 Important:
 - Use only supplied evidence.
 - Do not invent external intelligence.
-- If an indicator needs external validation, say so.
+- If an indicator needs external validation,
+  say so.
 - Do not provide instructions for executing malware.
 """
 
     user_prompt = f"""
 ORIGINAL EVIDENCE:
+
 {evidence}
 
 SPECIALIST FINDINGS:
+
 {findings}
 
 RISK ASSESSMENT:
+
 {risk}
 
 Produce the final SOC assessment.
@@ -386,6 +459,7 @@ Produce the final SOC assessment.
         user_prompt,
         SOC_MAX_TOKENS,
     )
+
 
 # ============================================================
 # IOC EXTRACTION
@@ -412,39 +486,95 @@ def extract_iocs(text):
         }
 
     # IPv4 addresses
-    ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+    ip_pattern = (
+        r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+    )
 
     # URLs
-    url_pattern = r"https?://[^\s<>\"]+"
+    url_pattern = (
+        r"https?://[^\s<>\"]+"
+    )
 
     # Email addresses
-    email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+    email_pattern = (
+        r"\b[A-Za-z0-9._%+-]+"
+        r"@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+    )
 
     # MD5 = 32 hexadecimal characters
-    md5_pattern = r"\b[a-fA-F0-9]{32}\b"
+    md5_pattern = (
+        r"\b[a-fA-F0-9]{32}\b"
+    )
 
     # SHA-1 = 40 hexadecimal characters
-    sha1_pattern = r"\b[a-fA-F0-9]{40}\b"
+    sha1_pattern = (
+        r"\b[a-fA-F0-9]{40}\b"
+    )
 
     # SHA-256 = 64 hexadecimal characters
-    sha256_pattern = r"\b[a-fA-F0-9]{64}\b"
+    sha256_pattern = (
+        r"\b[a-fA-F0-9]{64}\b"
+    )
 
-    ips = sorted(set(re.findall(ip_pattern, text)))
+    ips = sorted(
+        set(
+            re.findall(
+                ip_pattern,
+                text,
+            )
+        )
+    )
 
-    urls = sorted(set(re.findall(url_pattern, text)))
+    urls = sorted(
+        set(
+            re.findall(
+                url_pattern,
+                text,
+            )
+        )
+    )
 
-    emails = sorted(set(re.findall(email_pattern, text)))
+    emails = sorted(
+        set(
+            re.findall(
+                email_pattern,
+                text,
+            )
+        )
+    )
 
-    md5_hashes = sorted(set(re.findall(md5_pattern, text)))
+    md5_hashes = sorted(
+        set(
+            re.findall(
+                md5_pattern,
+                text,
+            )
+        )
+    )
 
-    sha1_hashes = sorted(set(re.findall(sha1_pattern, text)))
+    sha1_hashes = sorted(
+        set(
+            re.findall(
+                sha1_pattern,
+                text,
+            )
+        )
+    )
 
-    sha256_hashes = sorted(set(re.findall(sha256_pattern, text)))
+    sha256_hashes = sorted(
+        set(
+            re.findall(
+                sha256_pattern,
+                text,
+            )
+        )
+    )
 
     # Extract domains from URLs
     domains = []
 
     for url in urls:
+
         match = re.search(
             r"https?://([^/:?#]+)",
             url,
@@ -452,9 +582,11 @@ def extract_iocs(text):
         )
 
         if match:
-            domains.append(match.group(1).lower())
+            domains.append(
+                match.group(1).lower()
+            )
 
-    # Also detect standalone domains
+    # Detect standalone domains
     domain_pattern = (
         r"\b(?:[a-zA-Z0-9-]+\.)+"
         r"(?:com|net|org|info|biz|io|co|pk|uk|us|gov|edu)\b"
@@ -467,10 +599,15 @@ def extract_iocs(text):
     )
 
     domains.extend(
-        [domain.lower() for domain in standalone_domains]
+        [
+            domain.lower()
+            for domain in standalone_domains
+        ]
     )
 
-    domains = sorted(set(domains))
+    domains = sorted(
+        set(domains)
+    )
 
     return {
         "ip_addresses": ips,
@@ -483,22 +620,28 @@ def extract_iocs(text):
     }
 
 
+# ============================================================
+# IOC DISPLAY
+# ============================================================
+
 def display_ioc_summary(iocs):
-    """
-    Display extracted IOCs in the Streamlit interface.
-    """
 
     total_iocs = sum(
         len(values)
         for values in iocs.values()
     )
 
-    st.subheader("🔎 IOC Extraction")
+    st.subheader(
+        "🔎 IOC Extraction"
+    )
 
     if total_iocs == 0:
+
         st.info(
-            "No common IOCs were detected in the supplied evidence."
+            "No common IOCs were detected "
+            "in the supplied evidence."
         )
+
         return
 
     st.success(
@@ -510,19 +653,25 @@ def display_ioc_summary(iocs):
     with col1:
         st.metric(
             "IP Addresses",
-            len(iocs["ip_addresses"]),
+            len(
+                iocs["ip_addresses"]
+            ),
         )
 
     with col2:
         st.metric(
             "URLs",
-            len(iocs["urls"]),
+            len(
+                iocs["urls"]
+            ),
         )
 
     with col3:
         st.metric(
             "Domains",
-            len(iocs["domains"]),
+            len(
+                iocs["domains"]
+            ),
         )
 
     with col4:
@@ -536,48 +685,82 @@ def display_ioc_summary(iocs):
         )
 
     if iocs["ip_addresses"]:
-        st.write("**🌐 IP Addresses**")
+
+        st.write(
+            "**🌐 IP Addresses**"
+        )
+
         for item in iocs["ip_addresses"]:
             st.code(item)
 
     if iocs["urls"]:
-        st.write("**🔗 URLs**")
+
+        st.write(
+            "**🔗 URLs**"
+        )
+
         for item in iocs["urls"]:
             st.code(item)
 
     if iocs["domains"]:
-        st.write("**🏷️ Domains**")
+
+        st.write(
+            "**🏷️ Domains**"
+        )
+
         for item in iocs["domains"]:
             st.code(item)
 
     if iocs["email_addresses"]:
-        st.write("**📧 Email Addresses**")
+
+        st.write(
+            "**📧 Email Addresses**"
+        )
+
         for item in iocs["email_addresses"]:
             st.code(item)
 
     if iocs["md5"]:
-        st.write("**🔐 MD5**")
+
+        st.write(
+            "**🔐 MD5**"
+        )
+
         for item in iocs["md5"]:
             st.code(item)
 
     if iocs["sha1"]:
-        st.write("**🔐 SHA-1**")
+
+        st.write(
+            "**🔐 SHA-1**"
+        )
+
         for item in iocs["sha1"]:
             st.code(item)
 
     if iocs["sha256"]:
-        st.write("**🔐 SHA-256**")
+
+        st.write(
+            "**🔐 SHA-256**"
+        )
+
         for item in iocs["sha256"]:
             st.code(item)
+
+
 # ============================================================
 # FILE HASHING
 # ============================================================
 
-def calculate_sha256(uploaded_file):
+def calculate_sha256(
+    uploaded_file,
+):
 
     data = uploaded_file.getvalue()
 
-    sha256 = hashlib.sha256(data).hexdigest()
+    sha256 = hashlib.sha256(
+        data
+    ).hexdigest()
 
     return sha256, len(data)
 
@@ -586,16 +769,25 @@ def calculate_sha256(uploaded_file):
 # FILE METADATA
 # ============================================================
 
-def get_file_metadata(uploaded_file):
+def get_file_metadata(
+    uploaded_file,
+):
 
-    sha256, size = calculate_sha256(uploaded_file)
+    sha256, size = calculate_sha256(
+        uploaded_file
+    )
 
     filename = uploaded_file.name
 
     extension = ""
 
     if "." in filename:
-        extension = filename.rsplit(".", 1)[1].lower()
+
+        extension = (
+            filename
+            .rsplit(".", 1)[1]
+            .lower()
+        )
 
     return {
         "filename": filename,
@@ -610,7 +802,9 @@ def get_file_metadata(uploaded_file):
 # INVESTIGATION INPUT
 # ============================================================
 
-st.header("🔎 New Investigation")
+st.header(
+    "🔎 New Investigation"
+)
 
 input_tab, file_tab = st.tabs(
     [
@@ -627,8 +821,9 @@ input_tab, file_tab = st.tabs(
 with input_tab:
 
     st.write(
-        "Paste a phishing email, suspicious URL, IOC, alert, log excerpt, "
-        "or other defensive cybersecurity evidence."
+        "Paste a phishing email, suspicious URL, IOC, "
+        "alert, log excerpt, or other defensive "
+        "cybersecurity evidence."
     )
 
     investigation_text = st.text_area(
@@ -638,7 +833,8 @@ with input_tab:
             "Example:\n"
             "From: security-alert@example.com\n"
             "Subject: Urgent account verification\n"
-            "Click this link immediately: http://example.com/login"
+            "Click this link immediately: "
+            "http://example.com/login"
         ),
     )
 
@@ -656,8 +852,9 @@ with input_tab:
 with file_tab:
 
     st.write(
-        "Upload a file for defensive metadata and hash analysis. "
-        "The application does not execute uploaded files."
+        "Upload a file for defensive metadata "
+        "and hash analysis. The application does "
+        "not execute uploaded files."
     )
 
     uploaded_file = st.file_uploader(
@@ -690,33 +887,47 @@ with file_tab:
 if analyze_file:
 
     if uploaded_file is None:
-        st.warning("Please upload a file first.")
+
+        st.warning(
+            "Please upload a file first."
+        )
+
         st.stop()
 
-    metadata = get_file_metadata(uploaded_file)
+    metadata = get_file_metadata(
+        uploaded_file
+    )
 
-    st.subheader("📋 File Metadata")
+    st.subheader(
+        "📋 File Metadata"
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.metric(
             "File Size",
             f"{metadata['size_bytes']:,} bytes",
         )
 
     with col2:
+
         st.metric(
             "Type",
-            metadata["extension"].upper()
-            if metadata["extension"]
-            else "Unknown",
+            (
+                metadata["extension"].upper()
+                if metadata["extension"]
+                else "Unknown"
+            ),
         )
 
     with col3:
+
         st.metric(
             "Hash",
-            metadata["sha256"][:12] + "...",
+            metadata["sha256"][:12]
+            + "...",
         )
 
     st.code(
@@ -733,6 +944,7 @@ SHA-256: {metadata['sha256']}
 """
 
     investigation_text = evidence
+
     analyze_text = True
 
 
@@ -742,93 +954,152 @@ SHA-256: {metadata['sha256']}
 
 if analyze_text:
 
-    if not investigation_text or not investigation_text.strip():
-        st.warning("Please provide investigation evidence.")
+    if (
+        not investigation_text
+        or not investigation_text.strip()
+    ):
+
+        st.warning(
+            "Please provide investigation evidence."
+        )
+
         st.stop()
 
-evidence = clean_text(investigation_text)
+    evidence = clean_text(
+        investigation_text
+    )
 
-# Extract IOCs before running the AI agents
-iocs = extract_iocs(evidence)
+    # --------------------------------------------------------
+    # IOC extraction
+    # --------------------------------------------------------
 
-display_ioc_summary(iocs)
+    iocs = extract_iocs(
+        evidence
+    )
 
-ioc_context = json.dumps(
-    iocs,
-    indent=2,
-    ensure_ascii=False,
-)
-st.divider()
+    display_ioc_summary(
+        iocs
+    )
 
-st.subheader("🤖 Multi-Agent Investigation")
+    ioc_context = json.dumps(
+        iocs,
+        indent=2,
+        ensure_ascii=False,
+    )
 
-progress = st.progress(0)
-status = st.empty()
+    # --------------------------------------------------------
+    # Multi-Agent Investigation
+    # --------------------------------------------------------
 
-# --------------------------------------------------------
-# Specialist definitions
-# --------------------------------------------------------
+    st.divider()
 
-specialist_definitions = [
+    st.subheader(
+        "🤖 Multi-Agent Investigation"
+    )
+
+    progress = st.progress(0)
+
+    status = st.empty()
+
+    # --------------------------------------------------------
+    # Specialist definitions
+    # --------------------------------------------------------
+
+    specialist_definitions = [
+
         (
             "Email / Phishing Agent",
-            "Identify phishing characteristics, social engineering, suspicious sender details, urgency, credential theft indicators, and email anomalies.",
+            "Identify phishing characteristics, "
+            "social engineering, suspicious sender "
+            "details, urgency, credential theft "
+            "indicators, and email anomalies.",
         ),
+
         (
             "URL Agent",
-            "Identify suspicious URLs, domains, redirects, URL obfuscation, phishing patterns, and indicators requiring external validation.",
+            "Identify suspicious URLs, domains, "
+            "redirects, URL obfuscation, phishing "
+            "patterns, and indicators requiring "
+            "external validation.",
         ),
+
         (
             "File Agent",
-            "Assess supplied file metadata, filename, extension, hash, and any supplied textual evidence for suspicious characteristics.",
+            "Assess supplied file metadata, filename, "
+            "extension, hash, and any supplied "
+            "textual evidence for suspicious "
+            "characteristics.",
         ),
+
         (
             "Malware Agent",
-            "Look for evidence suggesting malware, trojans, worms, payload delivery, persistence, or malicious behavior. Do not assume malware without evidence.",
+            "Look for evidence suggesting malware, "
+            "trojans, worms, payload delivery, "
+            "persistence, or malicious behavior. "
+            "Do not assume malware without evidence.",
         ),
+
         (
             "IOC Agent",
-            "Extract and classify possible IP addresses, domains, URLs, hashes, email addresses, filenames, and other indicators of compromise.",
+            "Extract and classify possible IP "
+            "addresses, domains, URLs, hashes, "
+            "email addresses, filenames, and "
+            "other indicators of compromise.",
         ),
+
         (
             "Threat Intelligence Agent",
-            "Assess the supplied indicators from the evidence. Identify what would require external threat-intelligence validation. Do not invent reputation data.",
+            "Assess the supplied indicators from "
+            "the evidence. Identify what would "
+            "require external threat-intelligence "
+            "validation. Do not invent reputation data.",
         ),
     ]
 
-specialist_results = []
+    specialist_results = []
 
-total_agents = len(specialist_definitions)
-
-    # --------------------------------------------------------
-    # Run specialists
-    # --------------------------------------------------------
-
-for index, (agent_name, task) in enumerate(
-    specialist_definitions,
-    start=1,
-):
-
-    status.info(
-        f"Running {agent_name}..."
+    total_agents = len(
+        specialist_definitions
     )
 
-    result = specialist_agent(
+    # --------------------------------------------------------
+    # Run specialist agents
+    # --------------------------------------------------------
+
+    for index, (
         agent_name,
-        evidence,
         task,
-        ioc_context,
-    )
+    ) in enumerate(
+        specialist_definitions,
+        start=1,
+    ):
 
-    specialist_results.append(
+        status.info(
+            f"Running {agent_name}..."
+        )
+
+        result = specialist_agent(
+            agent_name,
+            evidence,
+            task,
+            ioc_context,
+        )
+
+        specialist_results.append(
             {
                 "agent": agent_name,
                 "finding": result,
             }
         )
 
-    progress.progress(
-            int((index / (total_agents + 2)) * 100)
+        progress.progress(
+            int(
+                (
+                    index
+                    / (total_agents + 2)
+                )
+                * 100
+            )
         )
 
     # --------------------------------------------------------
@@ -837,12 +1108,14 @@ for index, (agent_name, task) in enumerate(
 
     findings_text = "\n\n".join(
         [
-            f"[{item['agent']}]\n{item['finding']}"
+            (
+                f"[{item['agent']}]\n"
+                f"{item['finding']}"
+            )
             for item in specialist_results
         ]
     )
 
-    # Keep combined findings compact.
     findings_text = clean_text(
         findings_text,
         5000,
@@ -852,55 +1125,61 @@ for index, (agent_name, task) in enumerate(
     # Risk Agent
     # --------------------------------------------------------
 
-status.info("Running Risk Agent...")
+    status.info(
+        "Running Risk Agent..."
+    )
 
-risk_result = risk_agent(
-    findings_text,
-    ioc_context,
-)
+    risk_result = risk_agent(
+        findings_text,
+        ioc_context,
+    )
 
-progress.progress(
-    int((8 / 8) * 100)
-)
+    progress.progress(
+        int(
+            (8 / 8) * 100
+        )
+    )
 
     # --------------------------------------------------------
     # SOC Analyst
     # --------------------------------------------------------
 
-status.info(
-    "Running SOC Analyst Agent..."
-)
+    status.info(
+        "Running SOC Analyst Agent..."
+    )
 
-final_report = soc_analyst(
-    evidence,
-    findings_text,
-    risk_result,
-)
+    final_report = soc_analyst(
+        evidence,
+        findings_text,
+        risk_result,
+    )
 
-progress.progress(100)
+    progress.progress(100)
 
-status.success(
-    "Multi-agent investigation completed."
-)
+    status.success(
+        "Multi-agent investigation completed."
+    )
 
     # ========================================================
     # DISPLAY SPECIALIST RESULTS
     # ========================================================
 
-st.divider()
+    st.divider()
 
-st.subheader("🧩 Specialist Agent Findings")
+    st.subheader(
+        "🧩 Specialist Agent Findings"
+    )
 
-for item in specialist_results:
+    for item in specialist_results:
 
-    with st.expander(
-        f"🤖 {item['agent']}",
-        expanded=False,
-    ):
+        with st.expander(
+            f"🤖 {item['agent']}",
+            expanded=False,
+        ):
 
-        st.write(
-            item["finding"]
-        )
+            st.write(
+                item["finding"]
+            )
 
     # ========================================================
     # RISK ASSESSMENT
@@ -908,7 +1187,9 @@ for item in specialist_results:
 
     st.divider()
 
-    st.subheader("⚠️ Risk Assessment")
+    st.subheader(
+        "⚠️ Risk Assessment"
+    )
 
     st.markdown(
         risk_result
@@ -920,7 +1201,9 @@ for item in specialist_results:
 
     st.divider()
 
-    st.subheader("🛡️ SOC Analyst Report")
+    st.subheader(
+        "🛡️ SOC Analyst Report"
+    )
 
     st.markdown(
         final_report
@@ -931,10 +1214,15 @@ for item in specialist_results:
     # ========================================================
 
     report = {
-        "application": "CyberShield Multi-Agent SOC",
+        "application": (
+            "CyberShield Multi-Agent SOC"
+        ),
         "model": GROQ_MODEL,
         "investigation": evidence,
-        "specialist_agents": specialist_results,
+        "ioc_extraction": iocs,
+        "specialist_agents": (
+            specialist_results
+        ),
         "risk_assessment": risk_result,
         "soc_analyst_report": final_report,
     }
@@ -945,13 +1233,18 @@ for item in specialist_results:
         ensure_ascii=False,
     )
 
-st.download_button(
-    label="⬇️ Download JSON Investigation Report",
-    data=report_json,
-    file_name="cybershield_investigation_report.json",
-    mime="application/json",
-    use_container_width=True,
-)
+    st.download_button(
+        label=(
+            "⬇️ Download JSON "
+            "Investigation Report"
+        ),
+        data=report_json,
+        file_name=(
+            "cybershield_investigation_report.json"
+        ),
+        mime="application/json",
+        use_container_width=True,
+    )
 
 
 # ============================================================
@@ -961,6 +1254,7 @@ st.download_button(
 st.divider()
 
 st.caption(
-    "CyberShield Multi-Agent SOC • Defensive cybersecurity analysis • "
+    "CyberShield Multi-Agent SOC • "
+    "Defensive cybersecurity analysis • "
     "AI-generated findings require analyst validation."
 )
