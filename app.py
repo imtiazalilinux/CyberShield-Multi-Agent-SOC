@@ -891,16 +891,16 @@ st.divider()
 
 st.subheader("🧩 Specialist Agent Findings")
 
-    for item in specialist_results:
+for item in specialist_results:
 
-        with st.expander(
-            f"🤖 {item['agent']}",
-            expanded=False,
-        ):
+    with st.expander(
+        f"🤖 {item['agent']}",
+        expanded=False,
+    ):
 
-            st.write(
-                item["finding"]
-            )
+        st.write(
+            item["finding"]
+        )
 
     # ========================================================
     # RISK ASSESSMENT
