@@ -852,15 +852,16 @@ for index, (agent_name, task) in enumerate(
     # Risk Agent
     # --------------------------------------------------------
 
-    status.info("Running Risk Agent...")
+status.info("Running Risk Agent...")
 
-    risk_result = risk_agent(
-        findings_text
-    )
+risk_result = risk_agent(
+    findings_text,
+    ioc_context,
+)
 
-    progress.progress(
-        int((8 / 8) * 100)
-    )
+progress.progress(
+    int((8 / 8) * 100)
+)
 
     # --------------------------------------------------------
     # SOC Analyst
