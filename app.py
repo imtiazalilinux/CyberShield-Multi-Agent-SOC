@@ -867,21 +867,21 @@ progress.progress(
     # SOC Analyst
     # --------------------------------------------------------
 
-    status.info(
-        "Running SOC Analyst Agent..."
-    )
+status.info(
+    "Running SOC Analyst Agent..."
+)
 
-    final_report = soc_analyst(
-        evidence,
-        findings_text,
-        risk_result,
-    )
+final_report = soc_analyst(
+    evidence,
+    findings_text,
+    risk_result,
+)
 
-    progress.progress(100)
+progress.progress(100)
 
-    status.success(
-        "Multi-agent investigation completed."
-    )
+status.success(
+    "Multi-agent investigation completed."
+)
 
     # ========================================================
     # DISPLAY SPECIALIST RESULTS
