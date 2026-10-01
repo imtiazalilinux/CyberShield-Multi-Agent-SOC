@@ -1243,16 +1243,12 @@ for index, (
     )
 
     st.download_button(
-        label=(
-            "⬇️ Download JSON "
-            "Investigation Report"
-        ),
+        label="⬇️ Download JSON Investigation Report",
         data=report_json,
-        file_name=(
-            "cybershield_investigation_report.json"
-        ),
+        file_name="cybershield_investigation_report.json",
         mime="application/json",
         use_container_width=True,
+        key="download_json_report",
     )
 
 
