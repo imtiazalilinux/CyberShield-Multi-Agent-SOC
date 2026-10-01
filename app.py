@@ -887,9 +887,9 @@ status.success(
     # DISPLAY SPECIALIST RESULTS
     # ========================================================
 
-    st.divider()
+st.divider()
 
-    st.subheader("🧩 Specialist Agent Findings")
+st.subheader("🧩 Specialist Agent Findings")
 
     for item in specialist_results:
 
