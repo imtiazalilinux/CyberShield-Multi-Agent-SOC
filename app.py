@@ -7,7 +7,7 @@ from groq import Groq
 
 # ============================================================
 # CYBERSHIELD MULTI-AGENT SOC
-# Token-efficient MVP for Groq free/on-demand limits
+# Defensive AI-assisted cybersecurity investigation platform
 # ============================================================
 
 st.set_page_config(
@@ -25,6 +25,7 @@ st.set_page_config(
 DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY")
+
 GROQ_MODEL = st.secrets.get(
     "GROQ_MODEL",
     DEFAULT_MODEL,
@@ -62,14 +63,6 @@ st.markdown(
         margin-top: 0;
     }
 
-    .agent-box {
-        background: rgba(8, 21, 33, 0.85);
-        border: 1px solid #17364a;
-        border-radius: 12px;
-        padding: 14px;
-        margin-bottom: 10px;
-    }
-
     .status-online {
         color: #00e6a8;
         font-weight: bold;
@@ -77,21 +70,6 @@ st.markdown(
 
     .status-warning {
         color: #ffc857;
-        font-weight: bold;
-    }
-
-    .risk-high {
-        color: #ff5c5c;
-        font-weight: bold;
-    }
-
-    .risk-medium {
-        color: #ffc857;
-        font-weight: bold;
-    }
-
-    .risk-low {
-        color: #00e6a8;
         font-weight: bold;
     }
 
@@ -133,13 +111,16 @@ with st.sidebar:
     st.header("⚙️ SOC Status")
 
     if GROQ_API_KEY:
+
         st.markdown(
             '<span class="status-online">'
             "● Groq API: CONFIGURED"
             "</span>",
             unsafe_allow_html=True,
         )
+
     else:
+
         st.markdown(
             '<span class="status-warning">'
             "● Groq API: NOT CONFIGURED"
@@ -147,7 +128,9 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
-    st.write(f"Model: `{GROQ_MODEL}`")
+    st.write(
+        f"Model: `{GROQ_MODEL}`"
+    )
 
     st.divider()
 
@@ -165,14 +148,16 @@ with st.sidebar:
     ]
 
     for agent in agents:
-        st.write(f"✓ {agent}")
+        st.write(
+            f"✓ {agent}"
+        )
 
     st.divider()
 
     st.caption(
-        "Defensive analysis only. Uploaded files are hashed and "
-        "inspected as metadata/text. CyberShield does not execute "
-        "unknown files."
+        "Defensive analysis only. Uploaded files are "
+        "hashed and inspected as metadata/text. "
+        "CyberShield does not execute unknown files."
     )
 
 
@@ -181,10 +166,12 @@ with st.sidebar:
 # ============================================================
 
 if not GROQ_API_KEY:
+
     st.error(
-        "GROQ_API_KEY is not configured. Add it in "
-        "Streamlit → Settings → Secrets."
+        "GROQ_API_KEY is not configured. "
+        "Add it in Streamlit → Settings → Secrets."
     )
+
     st.stop()
 
 
@@ -210,11 +197,18 @@ RISK_MAX_TOKENS = 450
 SOC_MAX_TOKENS = 650
 
 
+# ============================================================
+# TEXT CLEANING
+# ============================================================
+
 def clean_text(
     text,
     limit=MAX_INPUT_CHARS,
 ):
-    """Normalize and truncate investigation evidence."""
+    """
+    Normalize and truncate text before sending it
+    to the Groq API.
+    """
 
     if not text:
         return ""
@@ -226,6 +220,7 @@ def clean_text(
     )
 
     if len(text) > limit:
+
         text = (
             text[:limit]
             + "\n[Evidence truncated]"
@@ -235,7 +230,7 @@ def clean_text(
 
 
 # ============================================================
-# GROQ CALL
+# GROQ API CALL
 # ============================================================
 
 def call_groq(
@@ -246,9 +241,8 @@ def call_groq(
     """
     Make a compact Groq request.
 
-    Small prompts and outputs are intentional because
-    the free/on-demand organization limit is currently
-    8K TPM.
+    The application intentionally keeps prompts and
+    outputs compact to reduce token usage.
     """
 
     response = client.chat.completions.create(
@@ -260,7 +254,7 @@ def call_groq(
                 "role": "system",
                 "content": clean_text(
                     system_prompt,
-                    1800,
+                    2200,
                 ),
             },
             {
@@ -273,11 +267,17 @@ def call_groq(
         ],
     )
 
-    return (
-        response.choices[0]
-        .message.content
-        .strip()
+    content = (
+        response
+        .choices[0]
+        .message
+        .content
     )
+
+    if not content:
+        return "No finding was returned by this agent."
+
+    return content.strip()
 
 
 # ============================================================
@@ -292,42 +292,59 @@ def specialist_agent(
 ):
 
     system_prompt = f"""
-You are the {agent_name} in a defensive SOC.
+You are the {agent_name} in a defensive Security Operations Center.
 
-Task:
+Your task:
 {task}
 
 Rules:
-- Analyze only the supplied evidence.
-- Do not invent reputation, sandbox, WHOIS,
-  VirusTotal, or external lookup results.
-- Clearly say when evidence is insufficient.
-- Focus on defensive cybersecurity.
-- Return concise findings.
-- Do not provide malware execution instructions.
 
-Return:
-1. Finding
-2. Evidence
-3. Risk: Low/Medium/High
-4. Recommended action
+- Analyze only the supplied evidence.
+- Do not invent facts.
+- Do not invent external reputation results.
+- Do not claim VirusTotal, WHOIS, sandbox, DNS,
+  geolocation, or other external lookup results
+  unless they are explicitly supplied.
+- Do not assume two indicators are related merely
+  because they appear in the same evidence.
+- Do not say an IP resolves to a domain unless
+  DNS evidence is supplied.
+- Do not call an indicator malicious unless the
+  supplied evidence supports that conclusion.
+- Distinguish observed indicators from interpretation.
+- Focus on defensive cybersecurity.
+- Do not provide malware execution instructions.
+- Return concise plain-text findings.
+- Do not use Markdown tables.
+- Do not use bullet symbols.
 """
 
     user_prompt = f"""
-Investigation evidence:
+INVESTIGATION EVIDENCE:
 
 {clean_text(evidence)}
 
-Extracted IOC information:
+EXTRACTED IOC INFORMATION:
 
 {clean_text(ioc_context, 1800)}
 
 Use the extracted IOCs as supporting evidence.
 
-If an IOC has not been externally verified,
-do not claim that it is malicious.
+For each conclusion, distinguish between:
+Observed evidence:
+What is directly present.
 
-Provide a concise SOC finding.
+Assessment:
+What the evidence may indicate.
+
+If evidence is insufficient, clearly say so.
+
+Return:
+
+Finding:
+Evidence:
+Risk:
+Recommended Action:
 """
 
     return call_groq(
@@ -357,24 +374,33 @@ You are the Risk Agent of a defensive SOC.
 Combine the specialist findings.
 
 Determine:
-- Overall risk: Low, Medium, or High
-- Main reason
-- Most important indicators
-- Immediate defensive action
 
-Do not invent facts.
-Do not claim external reputation checks
-that were not supplied.
+Overall risk: Low, Medium, or High
 
-Keep the answer concise.
+Main reason
+
+Most important indicators
+
+Immediate defensive action
+
+Rules:
+
+- Use only supplied evidence.
+- Do not invent facts.
+- Do not invent external reputation results.
+- Do not claim an IP resolves to a URL or domain
+  unless DNS evidence is supplied.
+- Do not automatically classify an IOC as malicious.
+- Distinguish observed indicators from assessment.
+- Keep the answer concise.
 """
 
     user_prompt = f"""
-Specialist findings:
+SPECIALIST FINDINGS:
 
 {compact_findings}
 
-Extracted IOC information:
+EXTRACTED IOC INFORMATION:
 
 {clean_text(ioc_context, 1800)}
 
@@ -422,20 +448,31 @@ You are the senior SOC Analyst.
 Create a concise defensive incident assessment.
 
 Include:
-- Executive summary
-- Risk level
-- Key findings
-- Indicators
-- Recommended containment
-- Recommended investigation
-- Confidence
 
-Important:
+Executive Summary
+
+Risk Level
+
+Key Findings
+
+Indicators
+
+Recommended Containment
+
+Recommended Investigation
+
+Confidence
+
+Rules:
+
 - Use only supplied evidence.
 - Do not invent external intelligence.
+- Do not claim DNS resolution unless supplied.
+- Do not claim an IOC is malicious without evidence.
+- Clearly distinguish observed evidence from assessment.
 - If an indicator needs external validation,
   say so.
-- Do not provide instructions for executing malware.
+- Do not provide malware execution instructions.
 """
 
     user_prompt = f"""
@@ -467,14 +504,14 @@ Produce the final SOC assessment.
 
 def extract_iocs(text):
     """
-    Extract common Indicators of Compromise (IOCs)
-    from investigation evidence.
+    Extract common Indicators of Compromise (IOCs).
 
     This is local pattern matching only.
     No external reputation lookup is performed.
     """
 
     if not text:
+
         return {
             "ip_addresses": [],
             "urls": [],
@@ -485,36 +522,67 @@ def extract_iocs(text):
             "sha256": [],
         }
 
-    # IPv4 addresses
+    # --------------------------------------------------------
+    # IPv4
+    # --------------------------------------------------------
+
     ip_pattern = (
         r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
     )
 
+    # --------------------------------------------------------
     # URLs
+    # --------------------------------------------------------
+
     url_pattern = (
         r"https?://[^\s<>\"]+"
     )
 
+    # --------------------------------------------------------
     # Email addresses
+    # --------------------------------------------------------
+
     email_pattern = (
         r"\b[A-Za-z0-9._%+-]+"
         r"@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
     )
 
-    # MD5 = 32 hexadecimal characters
+    # --------------------------------------------------------
+    # MD5
+    # Exactly 32 hexadecimal characters
+    # --------------------------------------------------------
+
     md5_pattern = (
-        r"\b[a-fA-F0-9]{32}\b"
+        r"(?<![A-Fa-f0-9])"
+        r"[A-Fa-f0-9]{32}"
+        r"(?![A-Fa-f0-9])"
     )
 
-    # SHA-1 = 40 hexadecimal characters
+    # --------------------------------------------------------
+    # SHA-1
+    # Exactly 40 hexadecimal characters
+    # --------------------------------------------------------
+
     sha1_pattern = (
-        r"\b[a-fA-F0-9]{40}\b"
+        r"(?<![A-Fa-f0-9])"
+        r"[A-Fa-f0-9]{40}"
+        r"(?![A-Fa-f0-9])"
     )
 
-    # SHA-256 = 64 hexadecimal characters
+    # --------------------------------------------------------
+    # SHA-256
+    # Exactly 64 hexadecimal characters
+    # --------------------------------------------------------
+
     sha256_pattern = (
-        r"\b[a-fA-F0-9]{64}\b"
+        r"(?<![A-Fa-f0-9])"
+        r"[A-Fa-f0-9]{64}"
+        r"(?![A-Fa-f0-9])"
     )
+
+    # --------------------------------------------------------
+    # Extract IPs
+    # --------------------------------------------------------
 
     ips = sorted(
         set(
@@ -525,6 +593,10 @@ def extract_iocs(text):
         )
     )
 
+    # --------------------------------------------------------
+    # Extract URLs
+    # --------------------------------------------------------
+
     urls = sorted(
         set(
             re.findall(
@@ -534,6 +606,10 @@ def extract_iocs(text):
         )
     )
 
+    # --------------------------------------------------------
+    # Extract emails
+    # --------------------------------------------------------
+
     emails = sorted(
         set(
             re.findall(
@@ -542,6 +618,10 @@ def extract_iocs(text):
             )
         )
     )
+
+    # --------------------------------------------------------
+    # Extract hashes
+    # --------------------------------------------------------
 
     md5_hashes = sorted(
         set(
@@ -570,7 +650,10 @@ def extract_iocs(text):
         )
     )
 
+    # --------------------------------------------------------
     # Extract domains from URLs
+    # --------------------------------------------------------
+
     domains = []
 
     for url in urls:
@@ -582,11 +665,15 @@ def extract_iocs(text):
         )
 
         if match:
+
             domains.append(
                 match.group(1).lower()
             )
 
+    # --------------------------------------------------------
     # Detect standalone domains
+    # --------------------------------------------------------
+
     domain_pattern = (
         r"\b(?:[a-zA-Z0-9-]+\.)+"
         r"(?:com|net|org|info|biz|io|co|pk|uk|us|gov|edu)\b"
@@ -608,6 +695,10 @@ def extract_iocs(text):
     domains = sorted(
         set(domains)
     )
+
+    # --------------------------------------------------------
+    # Return IOC dictionary
+    # --------------------------------------------------------
 
     return {
         "ip_addresses": ips,
@@ -651,6 +742,7 @@ def display_ioc_summary(iocs):
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+
         st.metric(
             "IP Addresses",
             len(
@@ -659,6 +751,7 @@ def display_ioc_summary(iocs):
         )
 
     with col2:
+
         st.metric(
             "URLs",
             len(
@@ -667,6 +760,7 @@ def display_ioc_summary(iocs):
         )
 
     with col3:
+
         st.metric(
             "Domains",
             len(
@@ -675,6 +769,7 @@ def display_ioc_summary(iocs):
         )
 
     with col4:
+
         st.metric(
             "Hashes",
             (
@@ -958,9 +1053,11 @@ if analyze_text:
         not investigation_text
         or not investigation_text.strip()
     ):
+
         st.warning(
             "Please provide investigation evidence."
         )
+
         st.stop()
 
     evidence = clean_text(
@@ -996,6 +1093,7 @@ if analyze_text:
     )
 
     progress = st.progress(0)
+
     status = st.empty()
 
     # --------------------------------------------------------
@@ -1080,12 +1178,6 @@ if analyze_text:
             evidence,
             task,
             ioc_context,
-        )
-
-        # Temporary diagnostic
-        st.write(
-            "DEBUG RESULT:",
-            repr(result),
         )
 
         specialist_results.append(
@@ -1176,7 +1268,11 @@ if analyze_text:
             expanded=False,
         ):
 
-            st.write(
+            # Display AI response as plain text
+            # to prevent Markdown formatting
+            # from producing strange bullets
+            # or numbered items.
+            st.text(
                 item["finding"]
             )
 
@@ -1219,9 +1315,7 @@ if analyze_text:
         "model": GROQ_MODEL,
         "investigation": evidence,
         "ioc_extraction": iocs,
-        "specialist_agents": (
-            specialist_results
-        ),
+        "specialist_agents": specialist_results,
         "risk_assessment": risk_result,
         "soc_analyst_report": final_report,
     }
