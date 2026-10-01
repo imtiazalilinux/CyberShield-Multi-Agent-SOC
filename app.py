@@ -1066,41 +1066,50 @@ if analyze_text:
     # Run specialist agents
     # --------------------------------------------------------
 
-    for index, (
+# --------------------------------------------------------
+# Run specialist agents
+# --------------------------------------------------------
+
+for index, (
+    agent_name,
+    task,
+) in enumerate(
+    specialist_definitions,
+    start=1,
+):
+
+    status.info(
+        f"Running {agent_name}..."
+    )
+
+    result = specialist_agent(
         agent_name,
+        evidence,
         task,
-    ) in enumerate(
-        specialist_definitions,
-        start=1,
-    ):
+        ioc_context,
+    )
 
-        status.info(
-            f"Running {agent_name}..."
-        )
+    st.write(
+        "DEBUG RESULT:",
+        repr(result),
+    )
 
-        result = specialist_agent(
-            agent_name,
-            evidence,
-            task,
-            ioc_context,
-        )
+    specialist_results.append(
+        {
+            "agent": agent_name,
+            "finding": result,
+        }
+    )
 
-        specialist_results.append(
-            {
-                "agent": agent_name,
-                "finding": result,
-            }
-        )
-
-        progress.progress(
-            int(
-                (
-                    index
-                    / (total_agents + 2)
-                )
-                * 100
+    progress.progress(
+        int(
+            (
+                index
+                / (total_agents + 2)
             )
+            * 100
         )
+    )
 
     # --------------------------------------------------------
     # Combine specialist results
