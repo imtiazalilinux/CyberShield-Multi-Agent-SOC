@@ -296,7 +296,7 @@ Provide a concise SOC finding.
 # ============================================================
 
 
-def risk_agent(findings):
+def risk_agent(findings ioc_context):
 
     compact_findings = clean_text(findings, 5000)
 
