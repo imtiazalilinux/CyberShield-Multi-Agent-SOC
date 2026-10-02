@@ -1,3 +1,4 @@
+
 import streamlit as st
 import hashlib
 import json
@@ -10,97 +11,327 @@ from groq import Groq
 # ============================================================
 
 st.set_page_config(
-    page_title="CyberShield Multi-Agent SOC",
+    page_title="CyberShield | Multi-Agent SOC",
     page_icon="🛡️",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 
 # ============================================================
-# CUSTOM CSS
+# CYBERSECURITY COMMAND CENTER THEME
 # ============================================================
 
-st.markdown(
-    """
-    <style>
-    .main {
-        background-color: #0b1220;
-    }
+st.markdown("""
+<style>
 
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
+/* Main application background */
 
-    .cyber-title {
-        font-size: 2.4rem;
-        font-weight: 800;
-        color: #00e5ff;
-        margin-bottom: 0.2rem;
-    }
+.stApp {
+    background:
+        radial-gradient(ellipse at 10% 10%, rgba(0, 180, 255, 0.13), transparent 35%),
+        radial-gradient(ellipse at 90% 20%, rgba(0, 100, 255, 0.12), transparent 35%),
+        radial-gradient(ellipse at 50% 100%, rgba(0, 220, 200, 0.07), transparent 45%),
+        linear-gradient(135deg, #050b18 0%, #081426 50%, #050b18 100%);
+    color: #e5f0ff;
+}
 
-    .cyber-subtitle {
-        color: #9ca3af;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
-    }
+/* Subtle background grid */
 
-    .agent-card {
-        background: #111827;
-        border: 1px solid #1f2937;
-        border-radius: 10px;
-        padding: 12px;
-        margin-bottom: 8px;
-    }
+.stApp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0, 180, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 180, 255, 0.035) 1px, transparent 1px);
+    background-size: 42px 42px;
+    pointer-events: none;
+    z-index: 0;
+}
 
-    .success-box {
-        background: #062e22;
-        border: 1px solid #047857;
-        border-radius: 8px;
-        padding: 12px;
-        color: #a7f3d0;
-    }
+/* Keep application content above background */
 
-    .warning-box {
-        background: #3a2500;
-        border: 1px solid #d97706;
-        border-radius: 8px;
-        padding: 12px;
-        color: #fde68a;
-    }
+.stApp > header,
+.stApp > div {
+    position: relative;
+    z-index: 1;
+}
 
-    .ioc-box {
-        background: #111827;
-        border: 1px solid #374151;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-    }
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1450px;
+}
 
-    code {
-        color: #00e5ff !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+/* Sidebar */
+
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #081426 0%, #050b18 100%);
+    border-right: 1px solid rgba(0, 200, 255, 0.18);
+}
+
+/* Main hero header */
+
+.cyber-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(120deg, rgba(5, 20, 42, 0.97), rgba(9, 35, 65, 0.92));
+    border: 1px solid rgba(0, 210, 255, 0.35);
+    border-radius: 18px;
+    padding: 32px 35px;
+    margin-bottom: 25px;
+    box-shadow:
+        0 0 25px rgba(0, 180, 255, 0.10),
+        inset 0 0 30px rgba(0, 150, 255, 0.04);
+}
+
+.cyber-hero::after {
+    content: "";
+    position: absolute;
+    top: -100px;
+    right: -60px;
+    width: 300px;
+    height: 300px;
+    border: 1px solid rgba(0, 220, 255, 0.12);
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 35px rgba(0, 200, 255, 0.025),
+        0 0 0 70px rgba(0, 200, 255, 0.02);
+}
+
+.cyber-title {
+    color: #38dfff;
+    font-size: 2.7rem;
+    font-weight: 850;
+    letter-spacing: 2px;
+    margin: 0;
+    text-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
+}
+
+.cyber-subtitle {
+    color: #c2d7ed;
+    font-size: 1.05rem;
+    letter-spacing: 2px;
+    margin-top: 8px;
+}
+
+.cyber-credit {
+    color: #8faec9;
+    font-size: 0.9rem;
+    margin-top: 18px;
+}
+
+.cyber-credit span {
+    color: #38dfff;
+    font-weight: 700;
+}
+
+/* Dashboard status cards */
+
+.status-card {
+    background: linear-gradient(145deg, #10243b, #09172a);
+    border: 1px solid rgba(0, 190, 255, 0.22);
+    border-radius: 12px;
+    padding: 17px;
+    text-align: center;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.18);
+}
+
+.status-label {
+    color: #91abc4;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+}
+
+.status-value {
+    color: #40e0ff;
+    font-size: 1.2rem;
+    font-weight: 750;
+    margin-top: 5px;
+}
+
+/* Agent cards */
+
+.agent-card {
+    background: linear-gradient(110deg, #10243a, #0a192b);
+    border: 1px solid rgba(0, 190, 255, 0.18);
+    border-radius: 9px;
+    padding: 11px 13px;
+    margin-bottom: 9px;
+    color: #d6e9fa;
+    transition: border 0.2s ease;
+}
+
+.agent-card:hover {
+    border: 1px solid rgba(0, 220, 255, 0.65);
+}
+
+/* Section headings */
+
+h1, h2, h3 {
+    color: #d9f4ff !important;
+}
+
+h4 {
+    color: #42dfff !important;
+}
+
+/* Inputs */
+
+.stTextArea textarea,
+.stTextInput input {
+    background-color: #09182a !important;
+    color: #e4f3ff !important;
+    border: 1px solid #24516e !important;
+    border-radius: 9px !important;
+}
+
+.stTextArea textarea:focus {
+    border: 1px solid #24d7ff !important;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.15) !important;
+}
+
+/* Buttons */
+
+.stButton > button,
+.stDownloadButton > button {
+    background: linear-gradient(100deg, #087da9, #0754a5);
+    color: white;
+    border: 1px solid rgba(0, 220, 255, 0.45);
+    border-radius: 9px;
+    font-weight: 700;
+    padding: 0.55rem 1.1rem;
+    transition: all 0.2s ease;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    background: linear-gradient(100deg, #079fc9, #0871cf);
+    border-color: #46e5ff;
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.25);
+    color: white;
+}
+
+/* Metrics */
+
+div[data-testid="stMetric"] {
+    background: linear-gradient(145deg, #10243b, #09172a);
+    border: 1px solid rgba(0, 190, 255, 0.2);
+    padding: 14px;
+    border-radius: 10px;
+}
+
+/* Code blocks */
+
+.stCodeBlock {
+    border: 1px solid rgba(0, 190, 255, 0.22);
+    border-radius: 9px;
+}
+
+/* Tabs */
+
+.stTabs [data-baseweb="tab"] {
+    color: #a9c5dd;
+}
+
+.stTabs [aria-selected="true"] {
+    color: #40ddff !important;
+}
+
+/* Dividers */
+
+hr {
+    border-color: rgba(0, 190, 255, 0.2);
+}
+
+/* Footer */
+
+.cyber-footer {
+    text-align: center;
+    padding: 25px 10px;
+    margin-top: 30px;
+    border-top: 1px solid rgba(0, 190, 255, 0.2);
+    color: #829bb3;
+    font-size: 0.85rem;
+}
+
+.cyber-footer strong {
+    color: #40dfff;
+}
+
+/* About card */
+
+.about-card {
+    background: linear-gradient(145deg, #10243b, #081426);
+    border: 1px solid rgba(0, 190, 255, 0.25);
+    border-radius: 12px;
+    padding: 15px;
+    color: #c7dced;
+    font-size: 0.88rem;
+    line-height: 1.7;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 
 # ============================================================
-# HEADER
+# HERO HEADER
 # ============================================================
 
-st.markdown(
-    '<div class="cyber-title">🛡️ CyberShield Multi-Agent SOC</div>',
-    unsafe_allow_html=True,
-)
+st.markdown("""
+<div class="cyber-hero">
 
-st.markdown(
-    '<div class="cyber-subtitle">'
-    "Defensive AI-assisted Security Operations Center investigation platform"
-    "</div>",
-    unsafe_allow_html=True,
-)
+    <div class="cyber-title">🛡️ CYBERSHIELD</div>
+
+    <div class="cyber-subtitle">
+        MULTI-AGENT SECURITY OPERATIONS CENTER
+    </div>
+
+    <p style="color:#a8c5df; margin-top:15px;">
+        AI-ASSISTED DEFENSIVE CYBERSECURITY INVESTIGATION PLATFORM
+    </p>
+
+    <div class="cyber-credit">
+        Concept &amp; Development by
+        <span>Imtiaz Ali</span>
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
+
+
+# ============================================================
+# DASHBOARD STATUS
+# ============================================================
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("""
+    <div class="status-card">
+        <div class="status-label">SYSTEM STATUS</div>
+        <div class="status-value">🟢 ONLINE</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+    <div class="status-card">
+        <div class="status-label">SPECIALIST AGENTS</div>
+        <div class="status-value">🤖 6 ACTIVE</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+    <div class="status-card">
+        <div class="status-label">IOC ENGINE</div>
+        <div class="status-value">🔎 READY</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ============================================================
@@ -108,23 +339,22 @@ st.markdown(
 # ============================================================
 
 with st.sidebar:
-    st.header("⚙️ SOC Status")
 
-    st.success("🟢 System Online")
+    st.markdown("## 🛡️ CYBERSHIELD")
+
+    st.success("🟢 SOC Platform Online")
 
     st.markdown("---")
 
-    st.subheader("🤖 Active Agents")
+    st.subheader("🤖 Specialist Agents")
 
     agents = [
         "📧 Email / Phishing Agent",
-        "🔗 URL Agent",
-        "📁 File Agent",
-        "🦠 Malware Agent",
-        "🔎 IOC Agent",
+        "🔗 URL Analysis Agent",
+        "📁 File Analysis Agent",
+        "🦠 Malware Analysis Agent",
+        "🔎 IOC Analysis Agent",
         "🌐 Threat Intelligence Agent",
-        "⚠️ Risk Agent",
-        "🛡️ SOC Analyst Agent",
     ]
 
     for agent in agents:
@@ -135,10 +365,47 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.caption(
-        "CyberShield performs defensive analysis only. "
-        "Uploaded files are never executed."
-    )
+    st.subheader("⚙️ Analysis Engine")
+
+    st.caption("AI Provider: Groq")
+    st.caption("Application: Streamlit")
+    st.caption("Language: Python")
+
+    st.markdown("---")
+
+    st.subheader("👨‍💻 About This Project")
+
+    st.markdown("""
+    <div class="about-card">
+
+    <b>Project:</b><br>
+    CyberShield Multi-Agent SOC
+
+    <br><br>
+
+    <b>Concept & Development:</b><br>
+    <span style="color:#40dfff;">Imtiaz Ali</span>
+
+    <br><br>
+
+    <b>Purpose:</b><br>
+    AI-assisted defensive SOC investigation.
+
+    <br><br>
+
+    <b>Focus Areas:</b><br>
+    • Phishing Detection<br>
+    • IOC Analysis<br>
+    • Threat Intelligence<br>
+    • Security Risk Assessment<br>
+    • Incident Investigation
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    st.caption("Cybersecurity Portfolio Project | 2026")
 
 
 # ============================================================
@@ -156,14 +423,12 @@ SPECIALIST_MAX_TOKENS = 350
 RISK_MAX_TOKENS = 450
 SOC_MAX_TOKENS = 650
 
-
 if not GROQ_API_KEY:
     st.error(
-        "GROQ_API_KEY is not configured. "
-        "Add it to Streamlit Secrets before running an investigation."
+        "GROQ_API_KEY is missing. "
+        "Please configure it in Streamlit Secrets."
     )
     st.stop()
-
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -173,17 +438,11 @@ client = Groq(api_key=GROQ_API_KEY)
 # ============================================================
 
 def clean_text(text, limit=MAX_INPUT_CHARS):
-    """
-    Clean and limit text before sending it to the AI model.
-    This helps control token usage.
-    """
 
     if not text:
         return ""
 
     text = str(text)
-
-    # Normalize whitespace while preserving readable content.
     text = " ".join(text.split())
 
     if len(text) > limit:
@@ -197,11 +456,6 @@ def clean_text(text, limit=MAX_INPUT_CHARS):
 # ============================================================
 
 def call_groq(system_prompt, user_prompt, max_tokens=350):
-    """
-    Send a request to Groq.
-
-    The prompts are intentionally compact to reduce token usage.
-    """
 
     response = client.chat.completions.create(
         model=GROQ_MODEL,
@@ -232,48 +486,31 @@ def call_groq(system_prompt, user_prompt, max_tokens=350):
 # ============================================================
 
 def specialist_agent(agent_name, evidence, task, ioc_context):
-    """
-    Run one specialist SOC agent.
-
-    Important:
-    The agent is explicitly instructed not to establish relationships
-    between separate indicators unless those relationships are present
-    in the supplied evidence.
-    """
 
     system_prompt = f"""
-You are the {agent_name} in a defensive Security Operations Center.
+You are the {agent_name} in a defensive SOC.
 
-Your task:
+Task:
 {task}
 
 STRICT EVIDENCE RULES:
 
-1. Analyze ONLY the supplied evidence.
-2. Never invent facts.
-3. Never invent external reputation results.
-4. Never invent DNS, WHOIS, VirusTotal, sandbox, malware,
-   geolocation, or threat-intelligence results.
-5. An IOC appearing in the same investigation does NOT prove
-   that it is related to another IOC.
-6. Do NOT say an IP belongs to, resolves from, or hosts a domain
-   unless the supplied evidence explicitly establishes that relationship.
-7. Do NOT say a hash belongs to a URL, file, email, payload,
-   or malware unless the supplied evidence explicitly establishes
-   that relationship.
-8. Do NOT call an IOC malicious merely because it exists.
-9. HTTP means the connection is not protected by TLS. It does NOT,
-   by itself, prove that the website is malicious.
-10. Clearly distinguish:
-    - Observed evidence
-    - Reasonable interpretation
-    - Unverified information
-11. If something cannot be confirmed, say:
-    "Needs external verification."
-12. Do not provide malware execution instructions.
+1. Analyze only supplied evidence.
+2. Never invent facts or external reputation results.
+3. Never invent DNS, WHOIS, VirusTotal, sandbox,
+   malware, geolocation, or threat intelligence results.
+4. IOCs appearing together do not prove a relationship.
+5. Do not say an IP belongs to or resolves from a domain
+   unless the evidence explicitly establishes this.
+6. Do not associate a hash with a URL, file, email,
+   or malware unless evidence explicitly establishes this.
+7. Do not call an IOC malicious merely because it exists.
+8. HTTP means no TLS encryption; it does not prove maliciousness.
+9. Distinguish observed evidence from interpretation.
+10. Say "Needs external verification" when appropriate.
+11. Never provide malware execution instructions.
 
-Return a concise SOC finding with:
-
+Return:
 Finding:
 Evidence:
 Assessment:
@@ -283,7 +520,7 @@ Confidence: Low / Medium / High
 """
 
     user_prompt = f"""
-SUPPLIED INVESTIGATION EVIDENCE:
+INVESTIGATION EVIDENCE:
 
 {clean_text(evidence)}
 
@@ -291,24 +528,13 @@ EXTRACTED IOC INFORMATION:
 
 {clean_text(ioc_context, 1800)}
 
-IMPORTANT:
+The IOC list identifies indicators found in the evidence.
+It does not establish relationships between indicators.
 
-The extracted IOC list only tells you that these indicators were
-found in the supplied evidence.
+Do not infer DNS resolution, IP ownership, URL hosting,
+or hash relationships unless explicitly stated.
 
-It does NOT establish relationships between them.
-
-For example:
-- An IP and a domain appearing together does not prove DNS resolution.
-- A URL and an IP appearing together does not prove the IP hosts the URL.
-- A hash and a URL appearing together does not prove the hash belongs
-  to the URL.
-- An email address and a domain appearing together does not prove
-  ownership or attribution.
-
-Use only relationships explicitly stated in the evidence.
-
-Provide the final specialist finding.
+Provide your specialist finding.
 """
 
     return call_groq(
@@ -323,19 +549,13 @@ Provide the final specialist finding.
 # ============================================================
 
 def risk_agent(findings, ioc_context):
-    """
-    Combine specialist findings into an overall risk assessment.
-
-    The Risk Agent must not invent relationships between IOCs.
-    """
 
     compact_findings = clean_text(findings, 5000)
 
     system_prompt = """
 You are the Risk Agent of a defensive SOC.
 
-Combine the specialist findings and determine:
-
+Determine:
 - Overall risk: Low, Medium, or High
 - Main reason
 - Most important observed indicators
@@ -344,22 +564,18 @@ Combine the specialist findings and determine:
 
 STRICT RULES:
 
-1. Use only supplied evidence and specialist findings.
+1. Use only supplied evidence.
 2. Never invent external intelligence.
 3. Never invent DNS, WHOIS, VirusTotal, sandbox,
-   reputation, geolocation, or threat actor information.
-4. Do not create relationships between IOCs merely because they
-   appear in the same investigation.
-5. Do not claim an IP belongs to or resolves a domain unless
-   the evidence explicitly states that.
-6. Do not claim a hash belongs to a URL, file, email, or payload
-   unless the evidence explicitly states that.
-7. HTTP indicates lack of TLS encryption, but does not by itself
-   prove malicious intent.
+   reputation, or threat actor information.
+4. Do not create relationships between separate IOCs.
+5. Do not claim an IP resolves to a domain unless
+   evidence explicitly establishes that.
+6. Do not associate a hash with a URL or file without evidence.
+7. HTTP does not automatically mean malicious.
 8. Separate confirmed observations from assumptions.
-9. If verification is required, clearly state:
-   "Needs external verification."
-10. Defensive recommendations must be proportional to the evidence.
+9. State when external verification is required.
+10. Recommendations must be proportional to evidence.
 
 Keep the answer concise.
 """
@@ -373,14 +589,8 @@ EXTRACTED IOC INFORMATION:
 
 {clean_text(ioc_context, 1800)}
 
-Remember:
-
-The IOC list identifies indicators found in the evidence.
-
-It does NOT automatically establish relationships between indicators.
-
-Only use a relationship if it is explicitly supported by the evidence
-or specialist findings.
+The IOC list does not prove relationships between indicators.
+Only use relationships explicitly supported by the evidence.
 
 Produce the risk assessment.
 """
@@ -397,9 +607,6 @@ Produce the risk assessment.
 # ============================================================
 
 def soc_analyst(original_evidence, specialist_findings, risk):
-    """
-    Senior SOC Analyst produces the final incident assessment.
-    """
 
     evidence = clean_text(original_evidence, 2400)
     findings = clean_text(specialist_findings, 4200)
@@ -408,10 +615,9 @@ def soc_analyst(original_evidence, specialist_findings, risk):
     system_prompt = """
 You are the senior SOC Analyst.
 
-Create a concise defensive incident assessment.
+Prepare a professional defensive incident assessment.
 
 Include:
-
 - Executive Summary
 - Risk Level
 - Key Findings
@@ -420,23 +626,20 @@ Include:
 - Recommended Investigation
 - Confidence
 
-STRICT EVIDENCE RULES:
+STRICT RULES:
 
 1. Use only supplied evidence.
-2. Do not invent external intelligence.
-3. Do not invent DNS, WHOIS, VirusTotal, sandbox,
-   reputation, geolocation, attribution, or malware results.
-4. Do not infer that two IOCs are related simply because they
-   appear in the same evidence.
-5. Do not say an IP belongs to or resolves a domain unless this
-   relationship is explicitly established.
-6. Do not say a hash belongs to a URL, email, file, or payload
-   unless this relationship is explicitly established.
-7. Do not automatically classify HTTP as malicious.
-8. Clearly distinguish confirmed observations from suspected activity.
+2. Never invent external intelligence.
+3. Never invent DNS, WHOIS, VirusTotal, sandbox,
+   reputation, geolocation, or attribution results.
+4. Do not infer relationships between IOCs.
+5. Do not claim an IP resolves a domain without evidence.
+6. Do not associate a hash with a URL or file without evidence.
+7. HTTP does not automatically prove maliciousness.
+8. Separate confirmed observations from suspected activity.
 9. State when additional verification is required.
-10. Do not provide malware execution instructions.
-11. Do not present assumptions as facts.
+10. Never provide malware execution instructions.
+11. Never present assumptions as facts.
 
 Use professional SOC terminology.
 """
@@ -454,9 +657,8 @@ RISK ASSESSMENT:
 
 {risk}
 
-Prepare the final defensive SOC assessment.
-
-Every important claim must be traceable to the supplied evidence.
+Prepare the final SOC assessment.
+Every important claim must be traceable to supplied evidence.
 """
 
     return call_groq(
@@ -471,6 +673,7 @@ Every important claim must be traceable to the supplied evidence.
 # ============================================================
 
 def empty_ioc_result():
+
     return {
         "ip_addresses": [],
         "urls": [],
@@ -483,13 +686,6 @@ def empty_ioc_result():
 
 
 def valid_ipv4(ip):
-    """
-    Validate IPv4 octets.
-
-    Example:
-    192.168.1.1 -> valid
-    999.999.999.999 -> invalid
-    """
 
     try:
         parts = ip.split(".")
@@ -507,22 +703,13 @@ def valid_ipv4(ip):
 
 
 def extract_iocs(text):
-    """
-    Extract common IOC types from supplied evidence.
-
-    This function only extracts indicators.
-    It does not determine whether they are malicious.
-    """
 
     if not text:
         return empty_ioc_result()
 
     text = str(text)
 
-    # --------------------------------------------------------
     # IP addresses
-    # --------------------------------------------------------
-
     ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
 
     raw_ips = re.findall(ip_pattern, text)
@@ -533,10 +720,7 @@ def extract_iocs(text):
         if valid_ipv4(ip) and ip not in ip_addresses:
             ip_addresses.append(ip)
 
-    # --------------------------------------------------------
     # URLs
-    # --------------------------------------------------------
-
     url_pattern = r'https?://[^\s<>"\']+'
 
     raw_urls = re.findall(url_pattern, text)
@@ -549,38 +733,37 @@ def extract_iocs(text):
         if url and url not in urls:
             urls.append(url)
 
-    # --------------------------------------------------------
     # Email addresses
-    # --------------------------------------------------------
-
     email_pattern = (
         r"\b[A-Za-z0-9._%+-]+"
         r"@[A-Za-z0-9.-]+\."
         r"[A-Za-z]{2,}\b"
     )
 
-    email_addresses = []
+    email_addresses = list(
+        dict.fromkeys(re.findall(email_pattern, text))
+    )
 
-    for email in re.findall(email_pattern, text):
-        if email not in email_addresses:
-            email_addresses.append(email)
-
-    # --------------------------------------------------------
     # Hashes
-    # --------------------------------------------------------
+    md5 = list(
+        dict.fromkeys(
+            re.findall(r"\b[a-fA-F0-9]{32}\b", text)
+        )
+    )
 
-    md5_pattern = r"\b[a-fA-F0-9]{32}\b"
-    sha1_pattern = r"\b[a-fA-F0-9]{40}\b"
-    sha256_pattern = r"\b[a-fA-F0-9]{64}\b"
+    sha1 = list(
+        dict.fromkeys(
+            re.findall(r"\b[a-fA-F0-9]{40}\b", text)
+        )
+    )
 
-    md5 = list(dict.fromkeys(re.findall(md5_pattern, text)))
-    sha1 = list(dict.fromkeys(re.findall(sha1_pattern, text)))
-    sha256 = list(dict.fromkeys(re.findall(sha256_pattern, text)))
+    sha256 = list(
+        dict.fromkeys(
+            re.findall(r"\b[a-fA-F0-9]{64}\b", text)
+        )
+    )
 
-    # --------------------------------------------------------
     # Domains
-    # --------------------------------------------------------
-
     domain_pattern = (
         r"\b(?:[a-zA-Z0-9]"
         r"(?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)"
@@ -589,13 +772,11 @@ def extract_iocs(text):
 
     raw_domains = re.findall(domain_pattern, text)
 
-    domains = []
-
-    for domain in raw_domains:
-        domain = domain.lower()
-
-        if domain not in domains:
-            domains.append(domain)
+    domains = list(
+        dict.fromkeys(
+            domain.lower() for domain in raw_domains
+        )
+    )
 
     return {
         "ip_addresses": ip_addresses,
@@ -613,13 +794,9 @@ def extract_iocs(text):
 # ============================================================
 
 def display_ioc_summary(iocs):
-    """
-    Display extracted IOC information.
-    """
 
     total_iocs = sum(
-        len(value)
-        for value in iocs.values()
+        len(value) for value in iocs.values()
     )
 
     st.subheader("🔎 IOC Extraction")
@@ -628,20 +805,9 @@ def display_ioc_summary(iocs):
 
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric(
-        "IP Addresses",
-        len(iocs["ip_addresses"]),
-    )
-
-    col2.metric(
-        "URLs",
-        len(iocs["urls"]),
-    )
-
-    col3.metric(
-        "Domains",
-        len(iocs["domains"]),
-    )
+    col1.metric("IP Addresses", len(iocs["ip_addresses"]))
+    col2.metric("URLs", len(iocs["urls"]))
+    col3.metric("Domains", len(iocs["domains"]))
 
     hash_count = (
         len(iocs["md5"])
@@ -649,80 +815,26 @@ def display_ioc_summary(iocs):
         + len(iocs["sha256"])
     )
 
-    col4.metric(
-        "Hashes",
-        hash_count,
-    )
+    col4.metric("Hashes", hash_count)
 
-    # --------------------------------------------------------
-    # IP addresses
-    # --------------------------------------------------------
+    sections = [
+        ("🌐 IP Addresses", "ip_addresses"),
+        ("🔗 URLs", "urls"),
+        ("🏷️ Domains", "domains"),
+        ("📧 Email Addresses", "email_addresses"),
+        ("🔐 MD5", "md5"),
+        ("🔐 SHA1", "sha1"),
+        ("🔐 SHA256", "sha256"),
+    ]
 
-    if iocs["ip_addresses"]:
-        st.markdown("### 🌐 IP Addresses")
+    for title, key in sections:
 
-        for item in iocs["ip_addresses"]:
-            st.code(item)
+        if iocs[key]:
 
-    # --------------------------------------------------------
-    # URLs
-    # --------------------------------------------------------
+            st.markdown(f"### {title}")
 
-    if iocs["urls"]:
-        st.markdown("### 🔗 URLs")
-
-        for item in iocs["urls"]:
-            st.code(item)
-
-    # --------------------------------------------------------
-    # Domains
-    # --------------------------------------------------------
-
-    if iocs["domains"]:
-        st.markdown("### 🏷️ Domains")
-
-        for item in iocs["domains"]:
-            st.code(item)
-
-    # --------------------------------------------------------
-    # Emails
-    # --------------------------------------------------------
-
-    if iocs["email_addresses"]:
-        st.markdown("### 📧 Email Addresses")
-
-        for item in iocs["email_addresses"]:
-            st.code(item)
-
-    # --------------------------------------------------------
-    # MD5
-    # --------------------------------------------------------
-
-    if iocs["md5"]:
-        st.markdown("### 🔐 MD5")
-
-        for item in iocs["md5"]:
-            st.code(item)
-
-    # --------------------------------------------------------
-    # SHA1
-    # --------------------------------------------------------
-
-    if iocs["sha1"]:
-        st.markdown("### 🔐 SHA1")
-
-        for item in iocs["sha1"]:
-            st.code(item)
-
-    # --------------------------------------------------------
-    # SHA256
-    # --------------------------------------------------------
-
-    if iocs["sha256"]:
-        st.markdown("### 🔐 SHA256")
-
-        for item in iocs["sha256"]:
-            st.code(item)
+            for item in iocs[key]:
+                st.code(item)
 
 
 # ============================================================
@@ -730,107 +842,100 @@ def display_ioc_summary(iocs):
 # ============================================================
 
 def calculate_sha256(file_bytes):
-    """
-    Calculate SHA-256 hash locally.
-
-    The file is NOT executed.
-    """
 
     return hashlib.sha256(file_bytes).hexdigest()
 
 
 def get_file_metadata(uploaded_file, file_bytes):
-    """
-    Collect safe metadata about an uploaded file.
-    """
-
-    sha256 = calculate_sha256(file_bytes)
 
     return {
         "filename": uploaded_file.name,
         "file_type": uploaded_file.type or "Unknown",
         "size_bytes": len(file_bytes),
-        "sha256": sha256,
+        "sha256": calculate_sha256(file_bytes),
     }
 
 
 # ============================================================
-# INPUT SECTION
+# INVESTIGATION INPUT
 # ============================================================
 
 st.markdown("---")
 
-st.header("📥 Investigation Input")
+st.header("📥 Security Investigation")
 
-input_tab, file_tab = st.tabs(
-    [
-        "📝 Text Investigation",
-        "📁 File Investigation",
-    ]
+st.caption(
+    "Submit suspicious email content, security logs, URLs, "
+    "network indicators, or files for defensive analysis."
 )
 
-
-# ============================================================
-# TEXT INPUT
-# ============================================================
+input_tab, file_tab = st.tabs([
+    "📝 Text Investigation",
+    "📁 File Investigation",
+])
 
 investigation_text = ""
 analyze_text = False
 
+
+# ============================================================
+# TEXT INVESTIGATION
+# ============================================================
+
 with input_tab:
 
-    st.markdown(
-        "Paste suspicious email content, logs, URLs, "
-        "IP addresses, hashes, or other security evidence."
-    )
+    st.markdown("#### 📝 Enter Investigation Evidence")
 
     text_input = st.text_area(
-        "Investigation Evidence",
+        "Security Evidence",
         height=250,
         placeholder=(
-            "Example:\n\n"
             "From: security@example.com\n"
             "Subject: Urgent account verification required\n\n"
             "Please verify your account:\n"
             "http://example.com/login\n\n"
-            "Connection observed to 185.220.101.45\n"
+            "Suspicious connection observed:\n"
+            "185.220.101.45\n\n"
             "MD5: d41d8cd98f00b204e9800998ecf8427e"
         ),
     )
 
     analyze_text = st.button(
-        "🚀 Analyze Evidence",
+        "🚀 Start SOC Investigation",
         type="primary",
         key="analyze_text_button",
     )
 
     if analyze_text:
+
         if not text_input.strip():
-            st.warning("Please provide investigation evidence.")
+            st.warning("Please enter investigation evidence.")
 
         else:
             investigation_text = text_input
 
 
 # ============================================================
-# FILE INPUT
+# FILE INVESTIGATION
 # ============================================================
 
 with file_tab:
 
-    st.markdown(
-        "Upload a file for safe metadata and SHA-256 analysis. "
-        "The application never executes uploaded files."
+    st.markdown("#### 📁 Upload Evidence File")
+
+    st.info(
+        "Safety: Files are hashed and their metadata is inspected. "
+        "Uploaded files are never executed."
     )
 
     uploaded_file = st.file_uploader(
-        "Upload Evidence File",
+        "Choose a file",
         type=None,
         key="investigation_file",
     )
 
     analyze_file = st.button(
-        "🔬 Analyze File",
+        "🔬 Analyze Uploaded File",
         type="primary",
         key="analyze_file_button",
     )
@@ -838,6 +943,7 @@ with file_tab:
     if analyze_file:
 
         if uploaded_file is None:
+
             st.warning("Please upload a file first.")
 
         else:
@@ -849,34 +955,23 @@ with file_tab:
                 file_bytes,
             )
 
-            st.subheader("📁 File Information")
+            st.subheader("📄 File Information")
 
             col1, col2 = st.columns(2)
 
             with col1:
-                st.write(
-                    f"**Filename:** {metadata['filename']}"
-                )
-
-                st.write(
-                    f"**Type:** {metadata['file_type']}"
-                )
-
-                st.write(
-                    f"**Size:** {metadata['size_bytes']} bytes"
-                )
+                st.write(f"**Filename:** {metadata['filename']}")
+                st.write(f"**File type:** {metadata['file_type']}")
+                st.write(f"**Size:** {metadata['size_bytes']} bytes")
 
             with col2:
                 st.write("**SHA-256:**")
-
                 st.code(metadata["sha256"])
 
             st.success(
-                "File processed safely. "
-                "No file execution was performed."
+                "File processed safely. No execution performed."
             )
 
-            # Build safe investigation evidence.
             investigation_text = f"""
 Uploaded file metadata:
 
@@ -885,8 +980,7 @@ File type: {metadata['file_type']}
 Size: {metadata['size_bytes']} bytes
 SHA-256: {metadata['sha256']}
 
-Important:
-The file was NOT executed.
+The file was not executed.
 No external reputation or malware scan was performed.
 """
 
@@ -894,94 +988,74 @@ No external reputation or malware scan was performed.
 
 
 # ============================================================
-# COMMON ANALYSIS PIPELINE
+# MULTI-AGENT INVESTIGATION PIPELINE
 # ============================================================
 
 if analyze_text and investigation_text.strip():
 
-    # --------------------------------------------------------
-    # Extract IOCs
-    # --------------------------------------------------------
+    st.markdown("---")
+
+    # IOC extraction
 
     iocs = extract_iocs(investigation_text)
 
     display_ioc_summary(iocs)
 
-    # --------------------------------------------------------
-    # Create IOC context
-    # --------------------------------------------------------
-
-    ioc_context = json.dumps(
-        iocs,
-        indent=2,
-    )
-
-    # --------------------------------------------------------
-    # Multi-Agent Investigation
-    # --------------------------------------------------------
+    ioc_context = json.dumps(iocs, indent=2)
 
     st.markdown("---")
 
     st.subheader("🤖 Multi-Agent Investigation")
 
-    with st.spinner(
-        "Running CyberShield specialist agents..."
-    ):
+    specialist_definitions = [
+        {
+            "name": "Email / Phishing Agent",
+            "task": (
+                "Analyze email evidence for phishing characteristics, "
+                "urgency, impersonation, suspicious requests, "
+                "and credential-harvesting language."
+            ),
+        },
+        {
+            "name": "URL Agent",
+            "task": (
+                "Analyze URL characteristics such as HTTP versus HTTPS, "
+                "suspicious paths, and unusual formatting."
+            ),
+        },
+        {
+            "name": "File Agent",
+            "task": (
+                "Analyze file metadata and hashes. Do not claim a file "
+                "is malicious without supporting evidence."
+            ),
+        },
+        {
+            "name": "Malware Agent",
+            "task": (
+                "Look for evidence of malware or malicious payloads. "
+                "Do not identify malware families without evidence."
+            ),
+        },
+        {
+            "name": "IOC Agent",
+            "task": (
+                "Review IPs, URLs, domains, emails, and hashes. "
+                "Identify indicators that require verification."
+            ),
+        },
+        {
+            "name": "Threat Intelligence Agent",
+            "task": (
+                "Assess supplied evidence from a threat intelligence "
+                "perspective. Do not fabricate external intelligence."
+            ),
+        },
+    ]
 
-        specialist_definitions = [
-            {
-                "name": "Email / Phishing Agent",
-                "task": (
-                    "Analyze email-related evidence for phishing "
-                    "characteristics such as urgency, suspicious "
-                    "requests, impersonation indicators, links, "
-                    "and credential-harvesting language."
-                ),
-            },
-            {
-                "name": "URL Agent",
-                "task": (
-                    "Analyze URLs for observable characteristics "
-                    "such as HTTP versus HTTPS, suspicious paths, "
-                    "unusual formatting, and other evidence explicitly "
-                    "present in the supplied data."
-                ),
-            },
-            {
-                "name": "File Agent",
-                "task": (
-                    "Analyze file-related evidence, metadata, and "
-                    "hashes. Do not claim a file is malicious without "
-                    "supporting evidence."
-                ),
-            },
-            {
-                "name": "Malware Agent",
-                "task": (
-                    "Look for evidence of malware or malicious payloads. "
-                    "Do not identify malware families without evidence "
-                    "supporting that identification."
-                ),
-            },
-            {
-                "name": "IOC Agent",
-                "task": (
-                    "Review extracted IPs, URLs, domains, emails, "
-                    "and hashes. Confirm what was observed and identify "
-                    "which indicators require external verification."
-                ),
-            },
-            {
-                "name": "Threat Intelligence Agent",
-                "task": (
-                    "Assess the supplied evidence from a threat "
-                    "intelligence perspective. Do not fabricate external "
-                    "reputation or attribution information."
-                ),
-            },
-        ]
+    specialist_results = []
 
-        specialist_results = []
+    with st.spinner("🤖 Specialist agents are investigating..."):
 
         for definition in specialist_definitions:
 
@@ -992,20 +1066,14 @@ if analyze_text and investigation_text.strip():
                 ioc_context,
             )
 
-            specialist_results.append(
-                {
-                    "agent": definition["name"],
-                    "finding": result,
-                }
-            )
+            specialist_results.append({
+                "agent": definition["name"],
+                "finding": result,
+            })
 
-    st.success(
-        "Multi-agent investigation completed."
-    )
+    st.success("Multi-agent investigation completed.")
 
-    # --------------------------------------------------------
-    # Specialist Findings
-    # --------------------------------------------------------
+    # Specialist findings
 
     st.markdown("---")
 
@@ -1013,62 +1081,42 @@ if analyze_text and investigation_text.strip():
 
     for item in specialist_results:
 
-        st.markdown(
-            f"#### 🤖 {item['agent']}"
-        )
+        with st.expander(
+            f"🤖 {item['agent']}",
+            expanded=True,
+        ):
 
-        # IMPORTANT:
-        # st.text() prevents the AI's Markdown from being
-        # interpreted as UI formatting.
-        #
-        # This fixes the previous situation where actual findings
-        # appeared as "-", "1.", "*" etc.
-        st.text(item["finding"])
-
-        st.markdown("---")
-
-    # --------------------------------------------------------
-    # Combine findings
-    # --------------------------------------------------------
+            st.text(item["finding"])
 
     combined_findings = "\n\n".join(
         [
-            f"Agent: {item['agent']}\n"
-            f"{item['finding']}"
+            f"Agent: {item['agent']}\n{item['finding']}"
             for item in specialist_results
         ]
     )
 
-    # --------------------------------------------------------
-    # Risk Agent
-    # --------------------------------------------------------
+    # Risk assessment
+
+    st.markdown("---")
 
     st.subheader("⚠️ Risk Assessment")
 
-    with st.spinner(
-        "Risk Agent is assessing the investigation..."
-    ):
+    with st.spinner("Risk Agent is assessing the evidence..."):
 
         risk_result = risk_agent(
             combined_findings,
             ioc_context,
         )
 
-    # Display risk as plain text to avoid accidental
-    # Markdown interpretation of unsupported AI formatting.
     st.text(risk_result)
 
-    # --------------------------------------------------------
-    # SOC Analyst
-    # --------------------------------------------------------
+    # SOC analyst report
 
     st.markdown("---")
 
     st.subheader("🛡️ SOC Analyst Report")
 
-    with st.spinner(
-        "Senior SOC Analyst is preparing the final assessment..."
-    ):
+    with st.spinner("Senior SOC Analyst is preparing the report..."):
 
         final_report = soc_analyst(
             investigation_text,
@@ -1078,9 +1126,7 @@ if analyze_text and investigation_text.strip():
 
     st.markdown(final_report)
 
-    # --------------------------------------------------------
-    # JSON REPORT
-    # --------------------------------------------------------
+    # Download report
 
     st.markdown("---")
 
@@ -1088,6 +1134,7 @@ if analyze_text and investigation_text.strip():
 
     report = {
         "project": "CyberShield Multi-Agent SOC",
+        "developer": "Imtiaz Ali",
         "model": GROQ_MODEL,
         "investigation": investigation_text,
         "iocs": iocs,
@@ -1103,22 +1150,41 @@ if analyze_text and investigation_text.strip():
     )
 
     st.download_button(
-        label="⬇️ Download JSON Report",
+        label="⬇️ Download SOC Investigation Report",
         data=report_json,
-        file_name="cybershield_soc_report.json",
+        file_name="CyberShield_SOC_Report.json",
         mime="application/json",
         key="download_json_report",
     )
 
 
 # ============================================================
-# FOOTER
+# PROFESSIONAL FOOTER
 # ============================================================
 
-st.markdown("---")
+st.markdown("""
+<div class="cyber-footer">
 
-st.caption(
-    "CyberShield Multi-Agent SOC • Defensive cybersecurity "
-    "analysis platform • AI-generated findings must be validated "
-    "against trusted security sources before operational action."
-)
+    <div style="font-size:1.15rem; margin-bottom:8px;">
+        🛡️ <strong>CYBERSHIELD MULTI-AGENT SOC</strong>
+    </div>
+
+    <div>
+        AI-Assisted Defensive Cybersecurity Investigation Platform
+    </div>
+
+    <div style="margin-top:12px;">
+        Concept &amp; Development by
+        <strong>Imtiaz Ali</strong>
+    </div>
+
+    <div style="margin-top:8px; font-size:0.75rem;">
+        © 2026 Imtiaz Ali | Cybersecurity Portfolio Project
+    </div>
+
+    <div style="margin-top:12px; font-size:0.72rem;">
+        AI-generated findings require validation before operational action.
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
