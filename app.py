@@ -24,16 +24,19 @@ st.markdown(
     """
     <style>
     /* ========================================================
-       CYBERSHIELD SOC COMMAND-CENTER THEME
-       Visual-only styling. Application logic is unchanged.
+       CYBERSHIELD FUTURISTIC SOC COMMAND-CENTER THEME
+       VISUAL-ONLY CSS — APPLICATION LOGIC UNCHANGED
        ======================================================== */
 
-    html, body, [data-testid="stAppViewContainer"] {
+    html,
+    body,
+    [data-testid="stAppViewContainer"] {
         background:
-            radial-gradient(circle at 15% 15%, rgba(0, 229, 255, 0.055), transparent 28%),
-            radial-gradient(circle at 85% 25%, rgba(0, 255, 170, 0.035), transparent 24%),
-            linear-gradient(135deg, #03070d 0%, #07111d 45%, #02060b 100%) !important;
-        color: #d7e3ea;
+            radial-gradient(circle at 82% 5%, rgba(0, 196, 255, 0.18), transparent 24%),
+            radial-gradient(circle at 12% 20%, rgba(0, 116, 255, 0.10), transparent 27%),
+            radial-gradient(circle at 58% 78%, rgba(80, 70, 255, 0.055), transparent 32%),
+            linear-gradient(135deg, #010711 0%, #031526 42%, #020b17 72%, #01050c 100%) !important;
+        color: #dcefff;
     }
 
     [data-testid="stAppViewContainer"] {
@@ -41,23 +44,46 @@ st.markdown(
         overflow: hidden;
     }
 
+    /* Futuristic circuit grid */
     [data-testid="stAppViewContainer"]::before {
         content: "";
         position: fixed;
         inset: 0;
         pointer-events: none;
-        opacity: 0.16;
         background-image:
-            linear-gradient(rgba(0, 229, 255, 0.055) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 229, 255, 0.055) 1px, transparent 1px);
-        background-size: 42px 42px;
-        mask-image: linear-gradient(to bottom, black, transparent 82%);
+            linear-gradient(rgba(0, 200, 255, 0.045) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 200, 255, 0.045) 1px, transparent 1px);
+        background-size: 44px 44px;
+        opacity: 0.72;
+        mask-image: linear-gradient(to bottom, black 0%, black 62%, transparent 100%);
+        z-index: 0;
+    }
+
+    /* Subtle digital globe / radar rings */
+    [data-testid="stAppViewContainer"]::after {
+        content: "";
+        position: fixed;
+        right: -165px;
+        top: -205px;
+        width: 560px;
+        height: 560px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 210, 255, 0.22);
+        box-shadow:
+            0 0 0 20px rgba(0, 210, 255, 0.035),
+            0 0 0 48px rgba(0, 210, 255, 0.025),
+            0 0 0 82px rgba(0, 210, 255, 0.018),
+            0 0 90px rgba(0, 190, 255, 0.10),
+            inset 0 0 70px rgba(0, 190, 255, 0.045);
+        pointer-events: none;
+        opacity: 0.78;
         z-index: 0;
     }
 
     [data-testid="stHeader"] {
-        background: rgba(2, 7, 13, 0.78) !important;
-        border-bottom: 1px solid rgba(0, 229, 255, 0.10);
+        background: rgba(1, 7, 15, 0.88) !important;
+        border-bottom: 1px solid rgba(0, 210, 255, 0.18);
+        box-shadow: 0 0 22px rgba(0, 180, 255, 0.035);
     }
 
     [data-testid="stMain"] {
@@ -70,152 +96,306 @@ st.markdown(
     }
 
     .block-container {
-        padding-top: 1.5rem;
+        padding-top: 1.35rem;
         padding-bottom: 2rem;
         max-width: 1500px;
     }
 
+    /* Header */
     .cyber-header {
         position: relative;
-        padding: 22px 28px 20px;
+        padding: 25px 30px 24px;
         margin-bottom: 24px;
-        border: 1px solid rgba(0, 229, 255, 0.22);
-        border-left: 4px solid #00e5ff;
-        border-radius: 12px;
+        border: 1px solid rgba(0, 210, 255, 0.36);
+        border-left: 4px solid #00dfff;
+        border-radius: 14px;
         background:
-            linear-gradient(135deg, rgba(0, 229, 255, 0.075), rgba(3, 11, 20, 0.92) 42%, rgba(0, 255, 170, 0.035));
+            linear-gradient(135deg,
+                rgba(0, 69, 112, 0.42),
+                rgba(2, 15, 31, 0.96) 46%,
+                rgba(4, 22, 43, 0.88));
         box-shadow:
-            0 0 35px rgba(0, 229, 255, 0.055),
+            0 0 38px rgba(0, 190, 255, 0.11),
+            inset 0 0 38px rgba(0, 180, 255, 0.035),
             inset 0 1px 0 rgba(255, 255, 255, 0.025);
         overflow: hidden;
     }
 
-    .cyber-header::after {
-        content: "SOC // DEFENSIVE OPERATIONS // AI ANALYTICS";
+    .cyber-header::before {
+        content: "";
         position: absolute;
-        right: 20px;
+        right: 0;
+        top: 0;
+        width: 52%;
+        height: 100%;
+        background:
+            linear-gradient(90deg, transparent, rgba(0, 190, 255, 0.035)),
+            repeating-linear-gradient(
+                135deg,
+                transparent 0 18px,
+                rgba(0, 205, 255, 0.025) 19px,
+                transparent 20px 38px
+            );
+        border-left: 1px solid rgba(0, 210, 255, 0.08);
+        pointer-events: none;
+    }
+
+    .cyber-header::after {
+        content: "DETECT   //   ANALYZE   //   RESPOND   //   DEFEND";
+        position: absolute;
+        right: 24px;
         bottom: 12px;
         font-family: monospace;
-        font-size: 0.62rem;
-        letter-spacing: 0.16em;
-        color: rgba(0, 229, 255, 0.34);
+        font-size: 0.64rem;
+        letter-spacing: 0.12em;
+        color: rgba(92, 215, 255, 0.46);
+        pointer-events: none;
     }
 
     .cyber-title {
+        position: relative;
+        z-index: 2;
         font-size: 2.35rem;
         line-height: 1.1;
         font-weight: 800;
-        letter-spacing: 0.02em;
-        color: #00e5ff;
-        margin: 0 0 7px 0;
-        text-shadow: 0 0 18px rgba(0, 229, 255, 0.22);
+        letter-spacing: 0.015em;
+        color: #f2fbff;
+        margin: 0 0 8px 0;
+        text-shadow: 0 0 18px rgba(0, 210, 255, 0.25);
     }
 
     .cyber-subtitle {
-        color: #a7b8c4;
+        position: relative;
+        z-index: 2;
+        color: #73ddff;
         font-size: 1rem;
         letter-spacing: 0.035em;
         margin: 0 0 7px 0;
     }
 
     .cyber-credit {
-        color: #6f8794;
+        position: relative;
+        z-index: 2;
+        color: #91aebe;
         font-family: monospace;
         font-size: 0.78rem;
-        letter-spacing: 0.10em;
-        text-transform: uppercase;
+        letter-spacing: 0.08em;
     }
 
+    /* Metrics */
     [data-testid="stMetric"] {
-        background: rgba(8, 18, 29, 0.76);
-        border: 1px solid rgba(0, 229, 255, 0.13);
-        border-radius: 9px;
-        padding: 10px;
+        background: linear-gradient(145deg, rgba(4, 31, 55, 0.94), rgba(2, 17, 34, 0.94));
+        border: 1px solid rgba(0, 205, 255, 0.22);
+        border-radius: 10px;
+        padding: 11px;
+        box-shadow:
+            0 0 18px rgba(0, 180, 255, 0.045),
+            inset 0 0 16px rgba(0, 190, 255, 0.025);
     }
 
+    [data-testid="stMetricLabel"] {
+        color: #79abc0 !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #00e5ff !important;
+        text-shadow: 0 0 10px rgba(0, 220, 255, 0.22);
+    }
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background:
+            linear-gradient(180deg, #010914 0%, #031a2f 46%, #020b17 100%) !important;
+        border-right: 1px solid rgba(0, 210, 255, 0.20);
+        box-shadow: 5px 0 30px rgba(0, 150, 255, 0.035);
+    }
+
+    section[data-testid="stSidebar"]::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+            linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+        background-size: 30px 30px;
+        opacity: 0.55;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+        color: #c6deea;
+    }
+
+    /* Agent cards */
     .agent-card {
-        background: linear-gradient(90deg, rgba(8, 20, 32, 0.95), rgba(10, 25, 37, 0.72));
-        border: 1px solid rgba(0, 229, 255, 0.12);
-        border-left: 2px solid rgba(0, 229, 255, 0.45);
-        border-radius: 6px;
+        position: relative;
+        background: linear-gradient(90deg, rgba(4, 30, 54, 0.96), rgba(3, 20, 38, 0.84));
+        border: 1px solid rgba(0, 190, 255, 0.17);
+        border-left: 3px solid rgba(0, 211, 255, 0.66);
+        border-radius: 8px;
         padding: 10px 12px;
         margin-bottom: 7px;
-        color: #c9d8df;
-        box-shadow: inset 0 0 16px rgba(0, 229, 255, 0.018);
+        color: #d5edf7;
+        box-shadow: inset 0 0 16px rgba(0, 180, 255, 0.025);
+        transition: all 0.2s ease;
     }
 
-    .success-box {
-        background: rgba(3, 49, 36, 0.72);
-        border: 1px solid #047857;
-        border-radius: 8px;
-        padding: 12px;
-        color: #a7f3d0;
+    .agent-card:hover {
+        border-color: rgba(0, 220, 255, 0.45);
+        box-shadow: 0 0 15px rgba(0, 190, 255, 0.08), inset 0 0 15px rgba(0, 180, 255, 0.04);
+        transform: translateX(2px);
     }
 
-    .warning-box {
-        background: rgba(58, 37, 0, 0.72);
-        border: 1px solid #d97706;
-        border-radius: 8px;
-        padding: 12px;
-        color: #fde68a;
-    }
-
-    .ioc-box {
-        background: rgba(8, 18, 29, 0.86);
-        border: 1px solid rgba(0, 229, 255, 0.13);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-    }
-
+    /* Inputs */
     [data-baseweb="textarea"] > div,
     [data-baseweb="input"] > div,
     [data-baseweb="select"] > div {
-        background: rgba(5, 13, 22, 0.90) !important;
-        border-color: rgba(0, 229, 255, 0.16) !important;
+        background: rgba(2, 15, 29, 0.94) !important;
+        border: 1px solid rgba(0, 200, 255, 0.22) !important;
+        border-radius: 9px !important;
+        box-shadow: inset 0 0 15px rgba(0, 170, 255, 0.025);
     }
 
-    textarea, input {
-        color: #dbeafe !important;
+    textarea,
+    input {
+        color: #dff8ff !important;
     }
 
+    textarea:focus,
+    input:focus {
+        border-color: #00dfff !important;
+        box-shadow: 0 0 14px rgba(0, 210, 255, 0.12) !important;
+    }
+
+    /* File uploader */
     [data-testid="stFileUploaderDropzone"] {
-        background: rgba(5, 13, 22, 0.72);
-        border: 1px dashed rgba(0, 229, 255, 0.28);
+        background: linear-gradient(145deg, rgba(3, 25, 45, 0.86), rgba(2, 14, 28, 0.96));
+        border: 1px dashed rgba(0, 210, 255, 0.38);
+        border-radius: 10px;
+        box-shadow: inset 0 0 20px rgba(0, 180, 255, 0.025);
     }
 
+    [data-testid="stFileUploaderDropzone"]:hover {
+        border-color: rgba(0, 225, 255, 0.65);
+    }
+
+    /* Primary buttons */
     button[kind="primary"] {
-        border: 1px solid rgba(0, 229, 255, 0.55) !important;
-        box-shadow: 0 0 14px rgba(0, 229, 255, 0.08);
+        background: linear-gradient(90deg, #008dff 0%, #005cff 50%, #4b35ff 100%) !important;
+        border: 1px solid rgba(75, 220, 255, 0.60) !important;
+        color: #ffffff !important;
+        border-radius: 9px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 0 18px rgba(0, 110, 255, 0.18);
+        transition: all 0.2s ease;
+    }
+
+    button[kind="primary"]:hover {
+        border-color: #00eaff !important;
+        box-shadow: 0 0 25px rgba(0, 190, 255, 0.30);
+        transform: translateY(-1px);
+    }
+
+    /* Tabs */
+    button[data-baseweb="tab"] {
+        color: #83aabd !important;
+        font-weight: 600;
+    }
+
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #00e5ff !important;
+        text-shadow: 0 0 10px rgba(0, 220, 255, 0.25);
+    }
+
+    /* Expanders */
+    [data-testid="stExpander"] {
+        background: linear-gradient(145deg, rgba(3, 27, 48, 0.88), rgba(2, 16, 32, 0.94));
+        border: 1px solid rgba(0, 195, 255, 0.20);
+        border-radius: 10px;
+        box-shadow: inset 0 0 20px rgba(0, 180, 255, 0.02);
+    }
+
+    /* IOC / code display */
+    .ioc-box {
+        background: linear-gradient(145deg, rgba(4, 27, 48, 0.90), rgba(2, 16, 31, 0.94));
+        border: 1px solid rgba(0, 200, 255, 0.18);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: inset 0 0 15px rgba(0, 180, 255, 0.025);
     }
 
     code {
         color: #00e5ff !important;
+        text-shadow: 0 0 8px rgba(0, 220, 255, 0.18);
     }
 
     pre {
-        background: #030a12 !important;
-        border: 1px solid rgba(0, 229, 255, 0.10);
-        border-radius: 7px;
+        background: #020b15 !important;
+        border: 1px solid rgba(0, 190, 255, 0.16);
+        border-radius: 8px;
+        box-shadow: inset 0 0 20px rgba(0, 150, 255, 0.025);
+    }
+
+    /* Alerts */
+    [data-testid="stAlert"] {
+        background: rgba(3, 28, 49, 0.86);
+        border: 1px solid rgba(0, 190, 255, 0.20);
+        border-radius: 9px;
+    }
+
+    .success-box {
+        background: rgba(0, 80, 65, 0.32);
+        border: 1px solid rgba(0, 220, 170, 0.45);
+        border-radius: 9px;
+        padding: 12px;
+        color: #8fffe0;
+    }
+
+    .warning-box {
+        background: rgba(75, 45, 0, 0.38);
+        border: 1px solid rgba(255, 175, 55, 0.48);
+        border-radius: 9px;
+        padding: 12px;
+        color: #ffe2a1;
+    }
+
+    /* Headings and separators */
+    h1, h2, h3, h4 {
+        color: #eafaff !important;
+        text-shadow: 0 0 10px rgba(0, 190, 255, 0.08);
     }
 
     hr {
-        border-color: rgba(0, 229, 255, 0.10) !important;
+        border: none !important;
+        border-top: 1px solid rgba(0, 205, 255, 0.14) !important;
+        margin: 22px 0 !important;
     }
 
-    section[data-testid="stSidebar"] {
-        background:
-            linear-gradient(180deg, rgba(3, 10, 17, 0.98), rgba(5, 14, 23, 0.98)) !important;
-        border-right: 1px solid rgba(0, 229, 255, 0.12);
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
     }
 
-    section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
-        color: #b9cbd4;
+    ::-webkit-scrollbar-track {
+        background: #020812;
     }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(#006f9f, #003b62);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #00bde8;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 
 
 # ============================================================
