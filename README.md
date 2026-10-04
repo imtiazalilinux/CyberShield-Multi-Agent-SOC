@@ -1,117 +1,215 @@
 # 🛡️ CyberShield Multi-Agent SOC
 
-> A defensive cybersecurity platform that uses eight specialized AI agents to collaboratively investigate suspicious emails, URLs, files, malware indicators, and other security evidence.
+> **Defensive AI-assisted Security Operations Center investigation platform**
 
 [![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Defensive Cybersecurity](https://img.shields.io/badge/Focus-Defensive%20Cybersecurity-1f6feb)](https://github.com/imtiazalilinux/CyberShield-Multi-Agent-SOC)
-[![Multi-Agent AI](https://img.shields.io/badge/Architecture-Multi--Agent%20AI-8A2BE2)](https://github.com/imtiazalilinux/CyberShield-Multi-Agent-SOC)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://cybershield-multi-agent-soc-udwevac2waqnbtkgz4jher.streamlit.app/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Groq](https://img.shields.io/badge/LLM-Groq-111111)](https://groq.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Launch%20App-FF4B4B?logo=streamlit&logoColor=white)](https://cybershield-multi-agent-soc-udwevac2waqnbtkgz4jher.streamlit.app/)
 
 ## 🌐 Live Demo
 
 Try the deployed Streamlit application:
 
-**[Launch CyberShield Multi-Agent SOC](https://cybershield-multi-agent-soc-udwevac2waqnbtkgz4jher.streamlit.app/)**
+### [Launch CyberShield Multi-Agent SOC](https://cybershield-multi-agent-soc-udwevac2waqnbtkgz4jher.streamlit.app/)
 
-> The live demo is intended for authorized defensive analysis, education, and research. Do not submit confidential information, credentials, private files, or sensitive production security data.
+> Use the demo only with authorized, non-sensitive security evidence. Do not upload credentials, confidential files, private data, or production incident information.
 
 ## 📌 Overview
 
-CyberShield Multi-Agent SOC is an AI-assisted security operations platform designed to transform raw security evidence into structured, explainable threat intelligence.
+CyberShield Multi-Agent SOC is a defensive cybersecurity application designed to help analysts investigate suspicious security evidence. It transforms unstructured input—such as email content, URLs, IP addresses, domains, hashes, logs, and uploaded files—into structured Indicators of Compromise (IOCs), specialist findings, risk assessment, and a final SOC-style investigation report.
 
-The platform coordinates **eight specialized AI agents** that work together to:
+The application uses **eight logical AI agents/components**:
 
-- Analyze suspicious emails, URLs, files, and malware indicators.
-- Extract and normalize Indicators of Compromise (IOCs).
-- Perform specialized threat analysis across multiple evidence types.
-- Correlate observations and assess overall security risk.
-- Generate a SOC-style investigation report.
-- Provide actionable security insights for analysts and defenders.
+- Six specialist investigation agents.
+- A Risk Agent that consolidates specialist findings.
+- A SOC Analyst Agent that produces the final defensive assessment.
 
-CyberShield is intended to support human security analysts—not replace expert judgment. Findings should be validated against organizational context, trusted intelligence sources, and established incident-response procedures.
+CyberShield is designed to assist a human analyst rather than replace a real Security Operations Center.
 
-## ✨ Key Capabilities
+## 🎯 Product Goal
 
-| Capability | Description |
+> Convert security evidence into structured IOC information, evidence-based specialist findings, risk assessment, and a downloadable SOC analyst report.
+
+The workflow is intended to reduce repetitive investigation work while preserving evidence control, uncertainty awareness, and human validation.
+
+## ✨ Key Features
+
+| Feature | Description |
 |---|---|
-| **Multi-Agent Investigation** | Eight focused AI agents collaborate on different parts of a security investigation. |
-| **Evidence Analysis** | Supports suspicious emails, URLs, files, malware indicators, and related security evidence. |
-| **IOC Extraction** | Identifies domains, IP addresses, URLs, hashes, email addresses, and other observables. |
-| **Threat Assessment** | Evaluates evidence and provides an interpretable risk perspective. |
-| **Security Correlation** | Combines agent findings into a unified investigation context. |
-| **SOC-Style Reporting** | Produces structured reports with observations, reasoning, risks, and recommended actions. |
-| **Explainable Results** | Presents findings in a format that helps analysts understand the reported conclusions. |
-| **Defensive Focus** | Supports threat analysis, investigation, and security operations workflows. |
+| **Text Investigation** | Analyze suspicious emails, URLs, IP addresses, hashes, logs, domains, and other textual evidence. |
+| **File Investigation** | Inspect uploaded-file metadata, file type, size, and locally calculated SHA-256 hash. |
+| **IOC Extraction** | Extract IPv4 addresses, URLs, domains, email addresses, MD5, SHA-1, and SHA-256 hashes. |
+| **IPv4 Validation** | Reject invalid IPv4 values such as `999.999.999.999`. |
+| **Multi-Agent Analysis** | Run six specialist agents over the supplied evidence and extracted IOC context. |
+| **Risk Assessment** | Produce a Low, Medium, or High risk assessment with reasoning, actions, and confidence. |
+| **SOC Report** | Generate an executive summary, key findings, indicators, containment guidance, investigation steps, and confidence. |
+| **JSON Export** | Download the complete investigation as `cybershield_soc_report.json`. |
+| **Evidence Controls** | Prevent unsupported claims about reputation, DNS, WHOIS, sandboxing, attribution, and external intelligence. |
+| **Defensive File Handling** | Uploaded files are read for metadata and hashing only; they are never executed. |
 
 ## 🔄 Investigation Workflow
 
 ```text
 Security Evidence
         │
-        ▼
-Evidence Intake & Normalization
+        ├── Text Investigation
+        │       └── Email, URL, IP, domain, hash, log, or other evidence
+        │
+        └── File Investigation
+                └── Filename, type, size, and SHA-256 metadata
         │
         ▼
-┌─────────────────────────────────────┐
-│  8 Specialized AI Security Agents   │
-│  Parallel Analysis & IOC Extraction │
-└─────────────────────────────────────┘
+IOC Extraction & Validation
         │
         ▼
-Threat Correlation & Risk Assessment
+Six Specialist AI Agents
+        │
+        ├── Email / Phishing Agent
+        ├── URL Agent
+        ├── File Agent
+        ├── Malware Agent
+        ├── IOC Agent
+        └── Threat Intelligence Agent
         │
         ▼
-SOC Investigation Report
+Risk Agent
         │
         ▼
-Actionable Defensive Recommendations
+SOC Analyst Agent
+        │
+        ▼
+Structured Investigation Report
+        │
+        ▼
+Downloadable JSON Report
 ```
 
-## 🧠 Multi-Agent Architecture
+## 🤖 Multi-Agent System
 
-CyberShield uses a collaborative agent architecture. Each specialized agent focuses on a specific analytical responsibility, while the overall workflow combines their outputs into a coherent investigation.
+| Agent | Main Responsibility |
+|---|---|
+| **Email / Phishing Agent** | Analyze urgency, suspicious requests, impersonation indicators, links, and credential-harvesting language. |
+| **URL Agent** | Review observable URL characteristics such as HTTP versus HTTPS, suspicious paths, and unusual formatting. HTTP alone is not treated as proof of maliciousness. |
+| **File Agent** | Analyze filename, file type, file size, and hash-related evidence without declaring a file malicious without supporting evidence. |
+| **Malware Agent** | Look for evidence of malicious payloads without inventing malware-family identification. |
+| **IOC Agent** | Review extracted IPs, URLs, domains, email addresses, and hashes and identify indicators requiring verification. |
+| **Threat Intelligence Agent** | Assess evidence from a threat-intelligence perspective without claiming results from external platforms. |
+| **Risk Agent** | Combine specialist findings and determine overall risk, key reasons, observed indicators, actions, and confidence. |
+| **SOC Analyst Agent** | Produce the final defensive incident assessment from the evidence, specialist findings, and risk assessment. |
 
-This approach helps the system:
+## 🔎 IOC Extraction
 
-1. Divide complex investigations into focused analytical tasks.
-2. Process different evidence types through specialized reasoning paths.
-3. Extract useful IOCs for additional investigation or enrichment.
-4. Compare findings across agents to identify consistent risk signals.
-5. Present a consolidated report for analyst review.
+CyberShield performs local Python-based IOC extraction before sending investigation context to the AI agents. The extractor identifies:
 
-## 📊 Investigation Output
+- IPv4 addresses, with octet validation.
+- URLs.
+- Domains.
+- Email addresses.
+- MD5 hashes.
+- SHA-1 hashes.
+- SHA-256 hashes.
 
-A CyberShield investigation is designed to provide a structured SOC-style report containing:
+IOC extraction identifies what appears in the supplied evidence. It does **not** determine whether an indicator is malicious or establish relationships between indicators.
 
-- **Executive summary** of the investigation.
-- **Evidence overview** and the objects analyzed.
-- **Extracted IOCs** and observable indicators.
-- **Agent-by-agent findings** and supporting reasoning.
-- **Threat and risk assessment**.
-- **Potential attack or abuse patterns**.
-- **Recommended defensive actions**.
-- **Important limitations and analyst validation notes**.
+### Relationship protection
 
-## 🛠️ Intended Use Cases
+CyberShield does not automatically assume that indicators are related merely because they appear in the same investigation:
 
-- Phishing and suspicious-email triage.
-- Malicious URL and domain investigation.
-- File and malware evidence analysis.
-- IOC extraction and organization.
-- Initial alert enrichment for SOC teams.
-- Security research and educational demonstrations.
-- AI-assisted incident investigation workflows.
+- An IP and a domain appearing together does not prove that the IP hosts or resolves to the domain.
+- A hash and a URL appearing together does not prove that the hash belongs to the URL or its payload.
+- An email address and a domain appearing together does not prove ownership or attribution.
 
-## 🚀 Getting Started
+## 🛡️ Evidence-Based AI Design
 
-### Clone the repository
+All agents are instructed to analyze only the supplied evidence and specialist findings. They must not fabricate:
+
+- DNS or WHOIS results.
+- VirusTotal, AbuseIPDB, OTX, URLhaus, or other reputation results.
+- Sandbox or malware-scan results.
+- Geolocation or threat-actor attribution.
+- Unsupported malware-family identification.
+- Relationships between separate IOCs.
+
+The system distinguishes between:
+
+```text
+Observed Evidence → Reasonable Interpretation → Unverified Information
+```
+
+When confirmation requires data that is not available, the analysis should state:
+
+> **Needs external verification.**
+
+## 📁 File Safety
+
+Uploaded files are handled defensively and are **never executed**. CyberShield currently:
+
+- Identifies the filename.
+- Identifies the file type.
+- Calculates the file size.
+- Calculates the SHA-256 hash locally.
+- Creates safe metadata for the AI investigation.
+
+The generated evidence explicitly records that the file was not executed and that no external reputation or malware scan was performed.
+
+## 📊 Investigation Report
+
+After analysis, CyberShield creates a structured JSON report containing:
+
+- Project name.
+- Configured model.
+- Investigation evidence.
+- Extracted IOCs.
+- Specialist agent findings.
+- Risk assessment.
+- Final SOC Analyst report.
+
+The report can be downloaded from the application as:
+
+```text
+cybershield_soc_report.json
+```
+
+## 🖥️ User Interface
+
+The Streamlit application provides an analyst-oriented interface with:
+
+- **Investigation Input** section.
+- **Text Investigation** tab.
+- **File Investigation** tab.
+- **IOC Extraction** dashboard.
+- **Specialist Agent Findings** section.
+- **Risk Assessment** section.
+- **SOC Analyst Report** section.
+- **Download JSON Report** action.
+
+The sidebar displays system status, all eight active agents, and the defensive-use notice that uploaded files are never executed.
+
+## ⚙️ Current AI Configuration
+
+| Setting | Configuration |
+|---|---|
+| **Provider** | Groq API |
+| **Default model** | `openai/gpt-oss-120b` |
+| **Model override** | `GROQ_MODEL` through Streamlit Secrets |
+| **API key** | `GROQ_API_KEY` through Streamlit Secrets |
+| **Maximum evidence length** | 3,500 characters |
+| **Risk levels** | Low, Medium, High |
+
+Longer evidence is truncated and marked with `[Evidence truncated]` to help control token usage.
+
+## 🚀 Quickstart
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/imtiazalilinux/CyberShield-Multi-Agent-SOC.git
 cd CyberShield-Multi-Agent-SOC
 ```
 
-### Create a virtual environment
+### 2. Create and activate a virtual environment
 
 ```bash
 python -m venv .venv
@@ -129,29 +227,47 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### Install dependencies
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run the project
+### 4. Configure Streamlit Secrets
 
-Use the project’s available entry point or startup instructions to launch CyberShield locally. Refer to the source files and configuration included in this repository for the current execution workflow.
+Create `.streamlit/secrets.toml` locally and add your Groq credentials:
 
-> Configuration and model/API requirements may vary depending on the enabled investigation agents and integrations. Never commit API keys, credentials, private samples, or sensitive security evidence to the repository.
+```toml
+GROQ_API_KEY = "your_groq_api_key"
+GROQ_MODEL = "openai/gpt-oss-120b"
+```
 
-## 🔐 Responsible Security Use
+Never commit API keys or other secrets to GitHub.
 
-CyberShield is intended for authorized defensive security analysis only. Use it exclusively with systems, accounts, files, URLs, and data that you are permitted to investigate.
+### 5. Run the application
 
-When working with real security evidence:
+```bash
+streamlit run app.py
+```
 
-- Protect confidential and personally identifiable information.
-- Sanitize sensitive samples before sharing them.
-- Avoid uploading secrets, credentials, or production data to untrusted services.
-- Validate AI-generated findings before taking operational action.
-- Treat automated risk assessments as analyst assistance, not definitive proof.
+The application will normally be available at `http://localhost:8501`.
+
+## 🧪 Example Investigation Evidence
+
+You can test the text investigation workflow with non-sensitive sample data:
+
+```text
+From: security@example.com
+Subject: Urgent account verification required
+
+Please verify your account immediately:
+http://example.com/login
+
+Connection observed to 185.220.101.45
+MD5: d41d8cd98f00b204e9800998ecf8427e
+```
+
+This example is for demonstrating extraction and analysis behavior only. The presence of an indicator does not automatically prove that it is malicious.
 
 ## 👥 Project Team
 
@@ -163,17 +279,75 @@ When working with real security evidence:
 | **Khadija Ikram** | Contributor | [LinkedIn Profile](https://www.linkedin.com/in/khadija-ikram-cs?utm_source=share_via&utm_content=profile&utm_medium=member_android) |
 | **Zeemal Emaan** | Contributor | [LinkedIn Profile](https://www.linkedin.com/in/zeemal-emaan-3a3941424?utm_source=share_via&utm_content=profile&utm_medium=member_android) |
 
-## 📁 Repository & Demo
+## 🔐 Responsible Security Use
+
+CyberShield is intended for authorized defensive security analysis, education, and research. Use it only with systems, accounts, files, URLs, and data that you are permitted to investigate.
+
+- Treat all submitted evidence as untrusted input.
+- Protect confidential and personally identifiable information.
+- Do not upload credentials, secrets, or sensitive production evidence.
+- Keep API keys server-side through Streamlit Secrets.
+- Validate AI-generated findings against trusted security sources.
+- Do not treat automated risk assessments as definitive proof.
+- Do not use the application to generate malware execution instructions or conduct unauthorized activity.
+
+## ⚠️ Current Limitations
+
+The current MVP does not include:
+
+- External threat-intelligence API integrations.
+- VirusTotal, AbuseIPDB, AlienVault OTX, or URLhaus lookups.
+- SIEM integrations such as Splunk, Wazuh, Elastic, or Microsoft Sentinel.
+- EDR integration.
+- Malware execution or sandbox analysis.
+- Persistent investigation history or a database-backed case-management system.
+- Automated response actions such as blocking IPs, disabling accounts, quarantining files, modifying firewalls, or isolating endpoints.
+
+AI-generated findings require analyst validation before operational action.
+
+## 🔭 Future Development
+
+Potential future phases include:
+
+### Phase 2 — Threat Intelligence
+
+- VirusTotal integration.
+- AbuseIPDB integration.
+- AlienVault OTX integration.
+- URLhaus integration.
+- External intelligence enrichment between IOC extraction and agent analysis.
+
+### Phase 3 — SOC Integration
+
+- Wazuh.
+- Splunk.
+- TheHive.
+- MISP.
+- OpenCTI.
+
+### Phase 4 — Advanced Analysis
+
+- MITRE ATT&CK mapping.
+- Sigma rule analysis.
+- YARA integration.
+- Malware sandbox integration.
+- DNS and WHOIS investigation.
+- IP, domain, and URL reputation.
+- Investigation history.
+- Analyst accounts and case management.
+
+## 📁 Repository & Resources
 
 - **Source code:** [CyberShield Multi-Agent SOC on GitHub](https://github.com/imtiazalilinux/CyberShield-Multi-Agent-SOC)
 - **Live application:** [Open the Streamlit demo](https://cybershield-multi-agent-soc-udwevac2waqnbtkgz4jher.streamlit.app/)
-- **Primary language:** Python
-- **Project focus:** Defensive cybersecurity, threat intelligence, and multi-agent AI investigation
+- **Application entry point:** [`app.py`](app.py)
+- **Python dependencies:** [`requirements.txt`](requirements.txt)
+- **License:** [MIT License](LICENSE)
 
 ## ⚖️ Disclaimer
 
-CyberShield Multi-Agent SOC is an AI-assisted cybersecurity project for defensive, educational, and research purposes. AI-generated analysis may be incomplete, inaccurate, or affected by the quality of submitted evidence. Always verify findings with qualified security professionals and trusted sources before making incident-response or business decisions.
+CyberShield Multi-Agent SOC is an AI-assisted cybersecurity project for defensive, educational, and research purposes. AI-generated analysis may be incomplete, inaccurate, or affected by the quality of the submitted evidence. The application does not provide definitive malware detection, external reputation verification, legal advice, or guaranteed incident conclusions. Always verify findings with qualified security professionals and trusted sources before taking incident-response or business action.
 
 ## 📄 License
 
-Please refer to the repository’s license file for the applicable terms of use.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the complete license text.
